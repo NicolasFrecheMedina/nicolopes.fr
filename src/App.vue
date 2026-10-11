@@ -1,6 +1,7 @@
 <script setup>
-import { computed, onBeforeUnmount, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { businessInfo } from './config/business.js'
+import BeforeAfter from './components/BeforeAfter.vue'
 
 const menuOpen = ref(false)
 const theme = ref(localStorage.getItem('nico-lopes-theme') === 'dark' ? 'dark' : 'light')
@@ -8,9 +9,22 @@ const themeTransitioning = ref(false)
 const sprayActive = ref(false)
 const contactDialog = ref(null)
 const serviceDialog = ref(null)
+const galleryDialog = ref(null)
+const galleryVideo = ref(null)
+const realisationsVideoRefs = ref([])
 const activeServiceIndex = ref(0)
+const activeGalleryProjectIndex = ref(0)
+const activeGalleryMediaIndex = ref(0)
+const activeRealisationsVideoIndex = ref(0)
+const galleryPageByProject = ref({})
 const themeToggle = ref(null)
 let lastServiceTrigger = null
+let lastGalleryTrigger = null
+const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
+const realisationsVideoPaused = ref(reducedMotionQuery.matches)
+const normalisePath = (path) => path.replace(/\/+$/, '') || '/'
+const currentPath = ref(normalisePath(window.location.pathname))
+const isRealisationsPage = computed(() => currentPath.value === '/realisations')
 document.documentElement.dataset.theme = theme.value
 document.querySelector('meta[name="theme-color"]')?.setAttribute(
   'content',
@@ -85,6 +99,17 @@ function toggleTheme() {
 
 onBeforeUnmount(() => {
   window.clearTimeout(sprayTimeout)
+  window.removeEventListener('popstate', syncPathFromLocation)
+  reducedMotionQuery.removeEventListener('change', handleReducedMotionChange)
+  pauseRealisationsVideos()
+})
+
+onMounted(() => {
+  window.addEventListener('popstate', syncPathFromLocation)
+  reducedMotionQuery.addEventListener('change', handleReducedMotionChange)
+  if (isRealisationsPage.value && !realisationsVideoPaused.value) {
+    afterPageRender(playActiveRealisationsVideo)
+  }
 })
 
 const services = [
@@ -148,12 +173,287 @@ function showNextService() {
   activeServiceIndex.value = (activeServiceIndex.value + 1) % services.length
 }
 
-const projects = [
-  { image: 'V1-02.jpeg', title: 'Réparation de carrosserie', category: 'Carrosserie' },
-  { image: 'V2-03.jpeg', title: 'Peinture automobile', category: 'Peinture' },
-  { image: 'V3-02.jpeg', title: 'Rénovation de véhicule', category: 'Carrosserie' },
-  { image: 'V4-03.jpeg', title: 'Travail de finition', category: 'Carrosserie' },
+const demonstrationsPath = '/ressources/02-demonstration/'
+const videosPath = '/ressources/03-video/'
+const realisationsVideoPoster = '/ressources/03-video/realisations-poster.jpg'
+const realisationsVideos = [
+  '/ressources/03-video/WhatsApp Video 2026-10-08 at 07.47.39.mp4',
+  '/ressources/03-video/WhatsApp Video 2026-10-08 at 07.47.40.mp4',
+  '/ressources/03-video/WhatsApp Video 2026-10-08 at 07.47.41.mp4',
 ]
+const realisationProjects = [
+  {
+    id: 'V1',
+    title: 'Remise en état de carrosserie',
+    images: ['V1-01.jpeg', 'V1-02.jpeg', 'V1-03.jpeg', 'V1-04.jpeg'],
+    video: {
+      src: `${videosPath}WhatsApp Video 2026-10-08 at 07.47.39.mp4`,
+      poster: `${videosPath}video-v1.jpg`,
+    },
+    comparison: {
+      before: 'V1-01.jpeg',
+      after: 'V1-02.jpeg',
+      afterLabel: 'PENDANT',
+      homeFraming: {
+        before: { scale: 1.14, positionX: 42, positionY: 58 },
+        after: { scale: 1, positionX: 50, positionY: 50 },
+      },
+    },
+  },
+  {
+    id: 'V2',
+    title: 'Réparation et finition automobile',
+    images: ['V2-01.jpeg', 'V2-02.jpeg', 'V2-03.jpeg', 'V2-04.jpeg', 'V2-05.jpeg', 'V2-06.jpeg', 'V2-07.jpeg'],
+    comparison: {
+      before: 'V2-02.jpeg',
+      after: 'V2-06.jpeg',
+      afterLabel: 'APRÈS',
+      homeFraming: {
+        before: { scale: 1.14, positionX: 50, positionY: 62 },
+        after: { scale: 1.12, positionX: 52, positionY: 58 },
+      },
+    },
+  },
+  {
+    id: 'V3',
+    title: 'Travaux réalisés à l’atelier',
+    images: ['V3-01.jpeg', 'V3-02.jpeg', 'V3-03.jpeg'],
+    video: {
+      src: `${videosPath}WhatsApp Video 2026-10-08 at 07.47.41.mp4`,
+      poster: `${videosPath}video-v3.jpg`,
+    },
+  },
+  {
+    id: 'V4',
+    title: 'Rénovation de carrosserie',
+    images: ['V4-00.jpeg', 'V4-01.jpeg', 'V4-02.jpeg', 'V4-03.jpeg', 'V4-04.jpeg', 'V4-05.jpeg'],
+    video: {
+      src: `${videosPath}WhatsApp Video 2026-10-08 at 07.47.40.mp4`,
+      poster: `${videosPath}video-v4.jpg`,
+    },
+    comparison: {
+      before: 'V4-01.jpeg',
+      after: 'V4-04.jpeg',
+      afterLabel: 'APRÈS',
+      homeFraming: {
+        before: { scale: 1, positionX: 50, positionY: 50 },
+        after: { scale: 1.12, positionX: 50, positionY: 52 },
+      },
+    },
+  },
+  {
+    id: 'V5',
+    title: 'Remise en état d’un véhicule',
+    images: ['V5-01.jpeg', 'V5-02.jpeg', 'V5-03.jpeg', 'V5-04.jpeg', 'V5-05.jpeg', 'V5-06.jpeg', 'V5-07.jpeg', 'V5-08.jpeg', 'V5-09.jpeg'],
+    comparison: {
+      before: 'V5-01.jpeg',
+      after: 'V5-07.jpeg',
+      afterLabel: 'APRÈS',
+      homeFraming: {
+        before: { scale: 1, positionX: 50, positionY: 50 },
+        after: { scale: 1.12, positionX: 50, positionY: 54 },
+      },
+    },
+  },
+]
+
+const homeComparisons = ['V2', 'V4', 'V5', 'V1'].map((id) => (
+  realisationProjects.find((project) => project.id === id)
+))
+const galleryPageSize = 4
+const activeGalleryProject = computed(() => realisationProjects[activeGalleryProjectIndex.value])
+const activeGalleryMedia = computed(() => (
+  projectMedia(activeGalleryProject.value)[activeGalleryMediaIndex.value]
+))
+const activeGalleryMediaCount = computed(() => projectMedia(activeGalleryProject.value).length)
+
+function imagePath(filename) {
+  return `${demonstrationsPath}${filename}`
+}
+
+function projectMedia(project) {
+  const media = project.images.map((filename, imageIndex) => ({
+    id: `${project.id}-image-${filename}`,
+    mediaIndex: imageIndex,
+    type: 'image',
+    src: imagePath(filename),
+    alt: `${project.title} — photo ${imageIndex + 1}`,
+  }))
+
+  if (project.video) {
+    media.push({
+      id: `${project.id}-video`,
+      mediaIndex: project.images.length,
+      type: 'video',
+      src: project.video.src,
+      poster: project.video.poster,
+      alt: `${project.title} — vidéo`,
+    })
+  }
+
+  return media
+}
+
+function galleryPage(project) {
+  return galleryPageByProject.value[project.id] ?? 1
+}
+
+function galleryPageCount(project) {
+  return Math.ceil(projectMedia(project).length / galleryPageSize)
+}
+
+function visibleGalleryMedia(project) {
+  const firstIndex = (galleryPage(project) - 1) * galleryPageSize
+  const media = projectMedia(project).slice(firstIndex, firstIndex + galleryPageSize)
+  return [...media, ...Array(galleryPageSize - media.length).fill(null)]
+}
+
+function showPreviousGalleryPage(project) {
+  galleryPageByProject.value[project.id] = Math.max(1, galleryPage(project) - 1)
+}
+
+function showNextGalleryPage(project) {
+  galleryPageByProject.value[project.id] = Math.min(
+    galleryPageCount(project),
+    galleryPage(project) + 1,
+  )
+}
+
+function setRealisationsVideoRef(element, index) {
+  if (element) realisationsVideoRefs.value[index] = element
+}
+
+function pauseRealisationsVideos() {
+  realisationsVideoRefs.value.forEach((video) => video?.pause())
+}
+
+async function playActiveRealisationsVideo() {
+  if (!isRealisationsPage.value || realisationsVideoPaused.value) return
+
+  realisationsVideoRefs.value.forEach((video, index) => {
+    if (index !== activeRealisationsVideoIndex.value) video?.pause()
+  })
+
+  const activeVideo = realisationsVideoRefs.value[activeRealisationsVideoIndex.value]
+  if (!activeVideo) return
+
+  try {
+    await activeVideo.play()
+  } catch {
+    realisationsVideoPaused.value = true
+  }
+}
+
+function showNextRealisationsVideo(endedIndex) {
+  if (endedIndex !== activeRealisationsVideoIndex.value) return
+
+  activeRealisationsVideoIndex.value = (endedIndex + 1) % realisationsVideos.length
+  afterPageRender(() => {
+    const nextVideo = realisationsVideoRefs.value[activeRealisationsVideoIndex.value]
+    if (nextVideo) nextVideo.currentTime = 0
+    playActiveRealisationsVideo()
+  })
+}
+
+function toggleRealisationsVideo() {
+  realisationsVideoPaused.value = !realisationsVideoPaused.value
+  if (realisationsVideoPaused.value) {
+    pauseRealisationsVideos()
+  } else {
+    playActiveRealisationsVideo()
+  }
+}
+
+function handleReducedMotionChange(event) {
+  realisationsVideoPaused.value = event.matches
+  if (event.matches) {
+    pauseRealisationsVideos()
+  } else if (isRealisationsPage.value) {
+    playActiveRealisationsVideo()
+  }
+}
+
+function afterPageRender(callback) {
+  nextTick(() => window.requestAnimationFrame(callback))
+}
+
+function syncPathFromLocation() {
+  currentPath.value = normalisePath(window.location.pathname)
+  menuOpen.value = false
+  afterPageRender(() => {
+    if (window.location.hash) {
+      document.querySelector(window.location.hash)?.scrollIntoView()
+    } else {
+      window.scrollTo({ top: 0 })
+    }
+    if (isRealisationsPage.value) {
+      playActiveRealisationsVideo()
+    } else {
+      pauseRealisationsVideos()
+    }
+  })
+}
+
+function openRealisationsPage(event) {
+  event?.preventDefault()
+  if (!isRealisationsPage.value) {
+    window.history.pushState({}, '', '/realisations')
+    currentPath.value = '/realisations'
+  }
+  menuOpen.value = false
+  window.scrollTo({ top: 0 })
+  afterPageRender(() => {
+    window.scrollTo({ top: 0 })
+    playActiveRealisationsVideo()
+  })
+}
+
+function openHomeSection(event, sectionId = 'accueil') {
+  menuOpen.value = false
+  if (!isRealisationsPage.value) return
+  event.preventDefault()
+  pauseRealisationsVideos()
+  window.history.pushState({}, '', `/#${sectionId}`)
+  currentPath.value = '/'
+  afterPageRender(() => document.getElementById(sectionId)?.scrollIntoView())
+}
+
+function stopGalleryVideo() {
+  if (!galleryVideo.value) return
+  galleryVideo.value.pause()
+  galleryVideo.value.currentTime = 0
+}
+
+function openGallery(projectIndex, mediaIndex, event) {
+  activeGalleryProjectIndex.value = projectIndex
+  activeGalleryMediaIndex.value = mediaIndex
+  lastGalleryTrigger = event.currentTarget
+  galleryDialog.value?.showModal()
+}
+
+function closeGallery() {
+  stopGalleryVideo()
+  galleryDialog.value?.close()
+}
+
+function restoreGalleryFocus() {
+  stopGalleryVideo()
+  window.requestAnimationFrame(() => lastGalleryTrigger?.focus())
+}
+
+function showPreviousGalleryMedia() {
+  stopGalleryVideo()
+  activeGalleryMediaIndex.value = (
+    activeGalleryMediaIndex.value - 1 + activeGalleryMediaCount.value
+  ) % activeGalleryMediaCount.value
+}
+
+function showNextGalleryMedia() {
+  stopGalleryVideo()
+  activeGalleryMediaIndex.value = (
+    activeGalleryMediaIndex.value + 1
+  ) % activeGalleryMediaCount.value
+}
 </script>
 
 <template>
@@ -203,7 +503,12 @@ const projects = [
   </svg>
 
   <header class="site-header">
-    <a class="brand" href="#accueil" aria-label="Nico & Lopes Carrosserie, accueil">
+    <a
+      class="brand"
+      :href="isRealisationsPage ? '/#accueil' : '#accueil'"
+      aria-label="Nico & Lopes Carrosserie, accueil"
+      @click="openHomeSection($event, 'accueil')"
+    >
       <img
         class="brand-logo"
         :src="logoSource"
@@ -225,10 +530,10 @@ const projects = [
     </button>
 
     <nav id="main-navigation" class="main-nav" :class="{ 'is-open': menuOpen }" aria-label="Navigation principale">
-      <a href="#services" @click="menuOpen = false">Nos services</a>
-      <a href="#realisations" @click="menuOpen = false">Réalisations</a>
-      <a href="#atelier" @click="menuOpen = false">La carrosserie</a>
-      <a href="#pourquoi-nous" @click="menuOpen = false">Pourquoi nous ?</a>
+      <a :href="isRealisationsPage ? '/#services' : '#services'" @click="openHomeSection($event, 'services')">Nos services</a>
+      <a href="/realisations" @click="openRealisationsPage">Réalisations</a>
+      <a :href="isRealisationsPage ? '/#atelier' : '#atelier'" @click="openHomeSection($event, 'atelier')">La carrosserie</a>
+      <a :href="isRealisationsPage ? '/#pourquoi-nous' : '#pourquoi-nous'" @click="openHomeSection($event, 'pourquoi-nous')">Pourquoi nous ?</a>
       <a href="#contact" aria-haspopup="dialog" @click.prevent="openContactDialog">Contact</a>
     </nav>
 
@@ -341,7 +646,57 @@ const projects = [
     </div>
   </dialog>
 
-  <main>
+  <dialog
+    ref="galleryDialog"
+    class="gallery-lightbox"
+    aria-labelledby="gallery-dialog-title"
+    @cancel.prevent="closeGallery"
+    @close="restoreGalleryFocus"
+    @click.self="closeGallery"
+    @keydown.left.prevent="showPreviousGalleryMedia"
+    @keydown.right.prevent="showNextGalleryMedia"
+  >
+    <div class="gallery-lightbox-topbar">
+      <div>
+        <p class="eyebrow">Nos réalisations</p>
+        <h2 id="gallery-dialog-title">{{ activeGalleryProject.title }}</h2>
+      </div>
+      <button autofocus class="gallery-lightbox-close" type="button" aria-label="Fermer la photo agrandie" @click="closeGallery">
+        <svg class="icon" aria-hidden="true"><use href="#icon-close" /></svg>
+      </button>
+    </div>
+    <div class="gallery-lightbox-viewer">
+      <button type="button" aria-label="Média précédent" @click="showPreviousGalleryMedia">
+        <svg class="icon gallery-arrow-previous" aria-hidden="true"><use href="#icon-arrow" /></svg>
+      </button>
+      <figure :class="{ 'is-video': activeGalleryMedia.type === 'video' }">
+        <img
+          v-if="activeGalleryMedia.type === 'image'"
+          :key="activeGalleryMedia.id"
+          :src="activeGalleryMedia.src"
+          :alt="activeGalleryMedia.alt"
+        />
+        <video
+          v-else
+          :key="activeGalleryMedia.id"
+          ref="galleryVideo"
+          :src="activeGalleryMedia.src"
+          :poster="activeGalleryMedia.poster"
+          controls
+          playsinline
+          preload="metadata"
+        ></video>
+        <figcaption>
+          {{ activeGalleryMediaIndex + 1 }} / {{ activeGalleryMediaCount }}
+        </figcaption>
+      </figure>
+      <button type="button" aria-label="Média suivant" @click="showNextGalleryMedia">
+        <svg class="icon" aria-hidden="true"><use href="#icon-arrow" /></svg>
+      </button>
+    </div>
+  </dialog>
+
+  <main v-if="!isRealisationsPage">
     <section id="accueil" class="hero">
       <div class="hero-shade"></div>
       <div class="hero-content">
@@ -404,23 +759,24 @@ const projects = [
           <p class="eyebrow">Le savoir-faire en images</p>
           <h2>Nos réalisations</h2>
         </div>
-        <a class="text-link" href="#contact">
-          Une question ?
+        <a class="text-link" href="/realisations" @click="openRealisationsPage">
+          Voir nos réalisations
           <svg class="icon" aria-hidden="true"><use href="#icon-arrow" /></svg>
         </a>
       </div>
-      <div class="project-grid">
-        <article v-for="project in projects" :key="project.image" class="project-card">
-          <img
-            :src="`/ressources/02-demonstration/${project.image}`"
-            :alt="project.title"
-            loading="lazy"
-          />
-          <div class="project-caption">
-            <span>{{ project.category }}</span>
-            <h3>{{ project.title }}</h3>
-          </div>
-        </article>
+      <div class="comparison-grid">
+        <BeforeAfter
+          v-for="project in homeComparisons"
+          :key="project.id"
+          :project="`Projet ${project.id}`"
+          :before="imagePath(project.comparison.before)"
+          :after="imagePath(project.comparison.after)"
+          :after-label="project.comparison.afterLabel"
+          :before-frame="project.comparison.homeFraming.before"
+          :after-frame="project.comparison.homeFraming.after"
+          :show-caption="false"
+          loading="lazy"
+        />
       </div>
     </section>
 
@@ -436,7 +792,7 @@ const projects = [
           Vous restez libre de choisir votre réparateur après un sinistre.
         </p>
       </div>
-      <div class="atelier-panel">
+      <div id="pourquoi-nous" class="atelier-panel">
         <svg class="atelier-icon" aria-hidden="true"><use href="#icon-insurance" /></svg>
         <p class="eyebrow">Sinistre automobile</p>
         <h3>Le libre choix du réparateur</h3>
@@ -449,9 +805,133 @@ const projects = [
     </section>
   </main>
 
+  <main v-else class="realisations-page">
+    <section class="realisations-hero">
+      <div class="realisations-hero-media" aria-hidden="true">
+        <video
+          v-for="(video, videoIndex) in realisationsVideos"
+          :key="video"
+          :ref="(element) => setRealisationsVideoRef(element, videoIndex)"
+          class="realisations-hero-video"
+          :class="{ 'is-active': videoIndex === activeRealisationsVideoIndex }"
+          :src="video"
+          :poster="realisationsVideoPoster"
+          :autoplay="videoIndex === activeRealisationsVideoIndex && !realisationsVideoPaused"
+          muted
+          playsinline
+          preload="metadata"
+          @ended="showNextRealisationsVideo(videoIndex)"
+        ></video>
+      </div>
+      <div class="realisations-hero-overlay"></div>
+      <div class="realisations-hero-content">
+        <p class="eyebrow">Le savoir-faire en images</p>
+        <h1>Nos réalisations</h1>
+        <p>Découvrez en images les travaux réalisés au sein de notre atelier de carrosserie à Castets.</p>
+      </div>
+      <button
+        class="realisations-video-control"
+        type="button"
+        :aria-label="realisationsVideoPaused ? 'Reprendre les vidéos du hero' : 'Mettre les vidéos du hero en pause'"
+        :aria-pressed="realisationsVideoPaused"
+        @click="toggleRealisationsVideo"
+      >
+        <svg v-if="realisationsVideoPaused" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="m8 5 11 7-11 7Z" />
+        </svg>
+        <svg v-else viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M8 5v14M16 5v14" />
+        </svg>
+        {{ realisationsVideoPaused ? 'Reprendre' : 'Pause' }}
+      </button>
+    </section>
+
+    <section
+      v-for="(project, projectIndex) in realisationProjects"
+      :key="project.id"
+      :id="`projet-${project.id.toLowerCase()}`"
+      class="section realisation-project"
+    >
+      <div class="realisation-project-heading">
+        <p class="eyebrow">Nos réalisations</p>
+        <h2>{{ project.title }}</h2>
+      </div>
+
+      <div class="realisation-project-layout" :class="{ 'is-gallery-only': !project.comparison }">
+        <BeforeAfter
+          v-if="project.comparison"
+          class="project-comparison"
+          :project="project.title"
+          :before="imagePath(project.comparison.before)"
+          :after="imagePath(project.comparison.after)"
+          :after-label="project.comparison.afterLabel"
+          :show-caption="false"
+          loading="lazy"
+        />
+
+        <div class="project-gallery">
+          <div class="realisations-gallery">
+            <template v-for="(media, slotIndex) in visibleGalleryMedia(project)" :key="media?.id ?? `${project.id}-empty-${galleryPage(project)}-${slotIndex}`">
+              <button
+                v-if="media"
+                class="gallery-thumbnail"
+                :class="{ 'is-video': media.type === 'video' }"
+                type="button"
+                :aria-label="media.type === 'video' ? `Lire la vidéo de ${project.title}` : `Agrandir une photo de ${project.title}`"
+                @click="openGallery(projectIndex, media.mediaIndex, $event)"
+              >
+                <img
+                  :src="media.type === 'video' ? media.poster : media.src"
+                  :alt="media.alt"
+                  loading="lazy"
+                  decoding="async"
+                />
+                <span v-if="media.type === 'video'" class="gallery-video-play" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><path d="m8 5 11 7-11 7Z" /></svg>
+                </span>
+              </button>
+              <span v-else class="gallery-thumbnail gallery-thumbnail-placeholder" aria-hidden="true"></span>
+            </template>
+          </div>
+
+          <nav
+            v-if="galleryPageCount(project) > 1"
+            class="gallery-pagination"
+            :aria-label="`Pagination de la galerie ${project.title}`"
+          >
+            <button
+              type="button"
+              :disabled="galleryPage(project) === 1"
+              :aria-label="`Page précédente de la galerie ${project.title}`"
+              @click="showPreviousGalleryPage(project)"
+            >
+              <svg class="icon gallery-arrow-previous" aria-hidden="true"><use href="#icon-arrow" /></svg>
+              Précédent
+            </button>
+            <span aria-live="polite">{{ galleryPage(project) }} / {{ galleryPageCount(project) }}</span>
+            <button
+              type="button"
+              :disabled="galleryPage(project) === galleryPageCount(project)"
+              :aria-label="`Page suivante de la galerie ${project.title}`"
+              @click="showNextGalleryPage(project)"
+            >
+              Suivant
+              <svg class="icon" aria-hidden="true"><use href="#icon-arrow" /></svg>
+            </button>
+          </nav>
+        </div>
+      </div>
+    </section>
+  </main>
+
   <footer id="contact" class="site-footer">
     <div class="footer-top">
-      <a class="brand footer-brand" href="#accueil" aria-label="Nico & Lopes Carrosserie, accueil">
+      <a
+        class="brand footer-brand"
+        :href="isRealisationsPage ? '/#accueil' : '#accueil'"
+        aria-label="Nico & Lopes Carrosserie, accueil"
+        @click="openHomeSection($event, 'accueil')"
+      >
         <img
           class="brand-logo"
           :src="logoSource"
@@ -484,6 +964,10 @@ const projects = [
         <h2>Contactez-nous</h2>
         <p>Écrivez-nous et nous vous répondrons par e-mail.</p>
         <span class="email-link">{{ businessInfo.email }}</span>
+        <a v-if="isRealisationsPage" class="button button-primary realisations-call" href="tel:0558894281">
+          <svg class="icon" aria-hidden="true"><use href="#icon-phone" /></svg>
+          Nous appeler
+        </a>
       </div>
 
       <form
