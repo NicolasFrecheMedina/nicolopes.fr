@@ -121,31 +121,53 @@ const projects = [
     <symbol id="icon-close" viewBox="0 0 24 24">
       <path d="m6 6 12 12M18 6 6 18" />
     </symbol>
+    <symbol id="icon-hero-bodywork" viewBox="0 0 64 48">
+      <path d="M3.5 31.5 7 24.8c1.4-2.6 4.2-4.1 9.2-5.1l8.2-7.9c3.6-3.4 9-4.6 13.7-2.9 4.2 1.5 7.9 4 11.2 7.1l7.5 2.5c3 1 4.7 3.5 4.7 6.5v6.5h-7.8a7.3 7.3 0 0 0-14.1 0H25.2a7.3 7.3 0 0 0-14.1 0H3.5Z" />
+      <path d="m18.1 19.3 8.7-6.1c2.8-2 6.5-2.5 9.7-1.3 2.9 1.1 5.7 2.8 8.2 5.1l2.3 2.2H18.1Zm10.7-6.5-2.2 6.4m10.9-7 4.1 7M8 27.4h5.4m40.8-6.1-5.6-.6" />
+      <circle cx="18.2" cy="32.2" r="5.2" />
+      <circle cx="46.7" cy="32.2" r="5.2" />
+      <path d="M25.1 34h14.7M4 31.5h7.1m42.6 0h7.7" />
+    </symbol>
+    <symbol id="icon-hero-glass" viewBox="0 0 56 48">
+      <path d="M8 37 13.5 13c.6-2.7 3-4.5 5.7-4.5h17.6c2.7 0 5.1 1.8 5.7 4.5L48 37H8Z" />
+      <path d="M13.8 32.5 18 14h20l4.2 18.5H13.8ZM19 41h18" />
+      <path d="m23 24 8-5m-5 10 8-5" />
+    </symbol>
+    <symbol id="icon-hero-courtesy" viewBox="0 0 64 48">
+      <path d="M3.5 31.5 7 24.8c1.3-2.5 4-4.1 8.5-5l7.6-7.2c3.4-3.2 8.4-4.4 12.9-3 4.5 1.4 8.5 3.8 12 7.3l8.8 2.7c3 1 4.7 3.4 4.7 6.4v5.5h-7.8a7.3 7.3 0 0 0-14.1 0H25.2a7.3 7.3 0 0 0-14.1 0H3.5Z" />
+      <path d="m17.3 19.5 8.2-5.8c2.7-1.9 6.2-2.4 9.3-1.4 3.3 1.1 6.4 3 9.1 5.5l1.8 1.7H17.3Zm10.5-6.4-2.1 6.4m10.4-6.7 4 6.7m-7.2-6.9v6.9M8 27.4h5.4m40.9-6.2-5.8-.5" />
+      <circle cx="18.2" cy="32.2" r="5.2" />
+      <circle cx="46.7" cy="32.2" r="5.2" />
+      <path d="M25.1 34h14.7M4 31.5h7.1m42.6 0h7.7" />
+    </symbol>
     <symbol id="icon-bodywork" viewBox="0 0 48 48">
-      <path d="M6 29h3l4-10c1-3 3-4 6-4h14c3 0 5 2 7 5l3 6h2v11h-5a5 5 0 0 0-10 0H19a5 5 0 0 0-10 0H6V29Z" />
-      <path d="M12 27h26M18 16l-3 11m16-11 5 11M14 37a5 5 0 1 0 10 0 5 5 0 0 0-10 0Zm15 0a5 5 0 1 0 10 0 5 5 0 0 0-10 0Z" />
+      <path d="M5 31h3l4-9c1-3 4-5 7-5h12c4 0 6 2 8 5l3 5 3 1v7h-5a5 5 0 0 0-10 0H19a5 5 0 0 0-10 0H5v-4Z" />
+      <path d="M13 27h27M18 18l-3 9m16-9 6 9M9 35a5 5 0 0 0 10 0m11 0a5 5 0 0 0 10 0M22 18v9" />
+      <path d="M6 30h5m28 0h5" />
     </symbol>
     <symbol id="icon-paint" viewBox="0 0 48 48">
-      <path d="M11 17h21l5 5-5 5H11a5 5 0 0 1 0-10Zm21 0v10m5-5h5" />
-      <path d="M13 27v9a4 4 0 0 0 4 4h4m-3-9h10" />
-      <path d="M11 17v-4a5 5 0 0 1 5-5h13l4 4-4 5" />
+      <path d="M5 17h25l7 5-7 5H10a5 5 0 0 1-5-5v-5Zm25 0v10m7-5h6" />
+      <path d="M13 27v5l4 2-2 9h10l2-10-5-6" />
+      <path d="M9 17v-4h13m-4 0V8h11l4 5-4 4M42 16l3-2m-3 14 3 2" />
     </symbol>
     <symbol id="icon-glass" viewBox="0 0 48 48">
-      <path d="M9 35 14 14a4 4 0 0 1 4-3h12a4 4 0 0 1 4 3l5 21H9Z" />
-      <path d="M14 30h20M19 15l-4 14m14-14 4 14M19 38h10" />
+      <path d="M7 36 12 14c.5-2 2-3 4-3h16c2 0 3.5 1 4 3l5 22H7Z" />
+      <path d="M13 30h22M18 15l-4 15m16-15 4 15M18 40h12" />
+      <path d="m20 22 7-5m-5 10 8-6" />
     </symbol>
     <symbol id="icon-headlight" viewBox="0 0 48 48">
-      <path d="M9 13h15c9 0 15 6 15 11s-6 11-15 11H9V13Z" />
-      <path d="M15 18v12m7-13v14m7-12v10m10-11 4-3m-4 14 4 3" />
+      <path d="M5 14h18c10 0 16 5 16 10s-6 10-16 10H5V14Z" />
+      <path d="M12 19v10m7-11v12m7-11v10m13-11 5-3m-5 9h6m-6 5 5 3" />
     </symbol>
     <symbol id="icon-courtesy-car" viewBox="0 0 48 48">
-      <path d="M6 29h3l4-9c1-3 3-4 6-4h13c3 0 5 2 7 5l3 5h2v11h-5a5 5 0 0 0-10 0H19a5 5 0 0 0-10 0H6V29Z" />
-      <path d="M14 37a5 5 0 1 0 10 0 5 5 0 0 0-10 0Zm15 0a5 5 0 1 0 10 0 5 5 0 0 0-10 0Zm-13-9h17" />
-      <path d="M20 16v-5h10v5" />
+      <path d="M5 30h3l4-9c1-3 4-5 7-5h12c4 0 6 2 8 5l3 6 3 1v7h-5a5 5 0 0 0-10 0H19a5 5 0 0 0-10 0H5v-5Z" />
+      <path d="M13 27h27M18 17l-3 10m16-10 6 10M9 35a5 5 0 0 0 10 0m11 0a5 5 0 0 0 10 0" />
+      <path d="M20 16v-5h10v5m-7-2h4" />
     </symbol>
     <symbol id="icon-insurance" viewBox="0 0 48 48">
-      <path d="m24 6 15 6v11c0 9-6 15-15 19C15 38 9 32 9 23V12l15-6Z" />
-      <path d="m17 24 5 5 10-11" />
+      <path d="m24 5 16 7v11c0 10-6 16-16 20C14 39 8 33 8 23V12l16-7Z" />
+      <path d="m16 25 5 5 11-12" />
+      <path d="M16 14c5-2 11-2 16 0" />
     </symbol>
   </svg>
 
@@ -245,15 +267,15 @@ const projects = [
         <p class="hero-copy">
           Carrosserie et peinture automobile, remplacement de vitrages et rénovation d’optiques.
         </p>
-        <a class="button button-primary" href="#services">
-          Découvrir nos services
-          <svg class="icon" aria-hidden="true"><use href="#icon-arrow" /></svg>
+        <a class="button button-primary hero-call" :href="phoneHref">
+          <svg class="icon" aria-hidden="true"><use href="#icon-phone" /></svg>
+          Nous appeler
         </a>
       </div>
       <div class="hero-points" aria-label="Nos services">
-        <span><svg class="icon" aria-hidden="true"><use href="#icon-bodywork" /></svg> Carrosserie &amp; peinture</span>
-        <span><svg class="icon" aria-hidden="true"><use href="#icon-glass" /></svg> Remplacement de vitrages</span>
-        <span><svg class="icon" aria-hidden="true"><use href="#icon-courtesy-car" /></svg> Véhicule de courtoisie</span>
+        <span><svg class="icon" aria-hidden="true"><use href="#icon-hero-bodywork" /></svg> Carrosserie &amp; peinture</span>
+        <span><svg class="icon" aria-hidden="true"><use href="#icon-hero-glass" /></svg> Remplacement de vitrages</span>
+        <span><svg class="icon" aria-hidden="true"><use href="#icon-hero-courtesy" /></svg> Véhicule de courtoisie</span>
         <span><svg class="icon" aria-hidden="true"><use href="#icon-insurance" /></svg> Toutes assurances</span>
       </div>
     </section>
