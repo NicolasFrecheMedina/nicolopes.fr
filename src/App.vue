@@ -7,7 +7,10 @@ const theme = ref(localStorage.getItem('nico-lopes-theme') === 'dark' ? 'dark' :
 const themeTransitioning = ref(false)
 const sprayActive = ref(false)
 const contactDialog = ref(null)
+const serviceDialog = ref(null)
+const activeServiceIndex = ref(0)
 const themeToggle = ref(null)
+let lastServiceTrigger = null
 document.documentElement.dataset.theme = theme.value
 document.querySelector('meta[name="theme-color"]')?.setAttribute(
   'content',
@@ -85,13 +88,65 @@ onBeforeUnmount(() => {
 })
 
 const services = [
-  { icon: 'bodywork', title: 'Carrosserie' },
-  { icon: 'paint', title: 'Peinture automobile' },
-  { icon: 'glass', title: 'Remplacement de vitrages' },
-  { icon: 'headlight', title: 'Rénovation d’optiques' },
-  { icon: 'courtesy-car', title: 'Véhicule de courtoisie' },
-  { icon: 'insurance', title: 'Prise en charge toutes assurances' },
+  {
+    image: '/ressources/05-services-icons/carrosserie.png',
+    title: 'Carrosserie',
+    description: 'La Carrosserie Nico & Lopes, située à Castets dans les Landes, vous accompagne pour la réparation automobile et la remise en état de votre carrosserie. Notre atelier intervient pour redonner à votre véhicule son aspect et ses finitions après un choc ou d’autres dommages de carrosserie.',
+  },
+  {
+    image: '/ressources/05-services-icons/peinture-automobile.png',
+    title: 'Peinture automobile',
+    description: 'Notre atelier de carrosserie à Castets réalise vos travaux de peinture automobile pour retrouver une finition soignée et harmonieuse. Qu’il s’agisse d’une remise en peinture ou de travaux associés à une réparation de carrosserie, nous accordons une attention particulière à l’aspect final de votre véhicule.',
+  },
+  {
+    image: '/ressources/05-services-icons/remplacement-vitrages.png',
+    title: 'Remplacement de vitrages',
+    description: 'La Carrosserie Nico & Lopes vous accompagne pour le remplacement de vos vitrages automobiles à Castets. Pare-brise et autres éléments vitrés de votre véhicule peuvent nécessiter une intervention adaptée pour retrouver une bonne visibilité et un vitrage en bon état.',
+  },
+  {
+    image: '/ressources/05-services-icons/renovation-optiques.png',
+    preserveColor: true,
+    title: 'Rénovation d’optiques',
+    description: 'Avec le temps, les optiques de phares peuvent devenir ternes ou perdre de leur transparence. Notre service de rénovation d’optiques automobiles à Castets vise à améliorer leur clarté et leur aspect, afin de redonner à vos phares une meilleure présentation.',
+  },
+  {
+    image: '/ressources/05-services-icons/vehicule-courtoisie.png',
+    courtesy: true,
+    title: 'Véhicule de courtoisie',
+    description: 'Pour faciliter votre mobilité pendant l’immobilisation de votre voiture, la Carrosserie Nico & Lopes propose des véhicules de courtoisie, selon les disponibilités. Une solution pratique pour vous accompagner durant les travaux de carrosserie ou de peinture automobile.',
+  },
+  {
+    image: '/ressources/05-services-icons/toutes-assurances.png',
+    title: 'Prise en charge toutes assurances',
+    description: 'La Carrosserie Nico & Lopes à Castets travaille avec les différentes compagnies d’assurance pour vous accompagner dans vos démarches après un sinistre automobile. Nous vous aidons à organiser la prise en charge des réparations de votre véhicule en lien avec votre assurance, selon les conditions de votre contrat.',
+  },
 ]
+
+const activeService = computed(() => services[activeServiceIndex.value])
+
+function openServiceDialog(index, event) {
+  activeServiceIndex.value = index
+  lastServiceTrigger = event.currentTarget
+  serviceDialog.value?.showModal()
+}
+
+function closeServiceDialog() {
+  serviceDialog.value?.close()
+}
+
+function restoreServiceFocus() {
+  window.requestAnimationFrame(() => {
+    lastServiceTrigger?.focus()
+  })
+}
+
+function showPreviousService() {
+  activeServiceIndex.value = (activeServiceIndex.value - 1 + services.length) % services.length
+}
+
+function showNextService() {
+  activeServiceIndex.value = (activeServiceIndex.value + 1) % services.length
+}
 
 const projects = [
   { image: 'V1-02.jpeg', title: 'Réparation de carrosserie', category: 'Carrosserie' },
@@ -113,32 +168,8 @@ const projects = [
     <symbol id="icon-phone" viewBox="0 0 24 24">
       <path d="M7.2 3.5 10 7.2 8.3 9.6a14.2 14.2 0 0 0 6.1 6.1l2.4-1.7 3.7 2.8-.7 3.1c-.2.9-1.1 1.5-2 1.4A17.8 17.8 0 0 1 2.7 6.6c-.1-.9.5-1.8 1.4-2l3.1-1.1Z" />
     </symbol>
-    <symbol id="icon-spray-gun" viewBox="0 0 48 48">
-      <path d="M7 16h19a5 5 0 0 1 0 10H13l-3 5H6l2-8a5 5 0 0 1-1-7Z" />
-      <path d="M26 18h8l4-3h4v8h-4l-4-3h-8m-8 6 4 5-2 8h-7l3-12" />
-      <path d="M10 12h12m-2 4v-5h7v5m14 5h5m-5-4 5-2m-5 8 5 2" />
-    </symbol>
     <symbol id="icon-close" viewBox="0 0 24 24">
       <path d="m6 6 12 12M18 6 6 18" />
-    </symbol>
-    <symbol id="icon-hero-bodywork" viewBox="0 0 64 48">
-      <path d="M3.5 31.5 7 24.8c1.4-2.6 4.2-4.1 9.2-5.1l8.2-7.9c3.6-3.4 9-4.6 13.7-2.9 4.2 1.5 7.9 4 11.2 7.1l7.5 2.5c3 1 4.7 3.5 4.7 6.5v6.5h-7.8a7.3 7.3 0 0 0-14.1 0H25.2a7.3 7.3 0 0 0-14.1 0H3.5Z" />
-      <path d="m18.1 19.3 8.7-6.1c2.8-2 6.5-2.5 9.7-1.3 2.9 1.1 5.7 2.8 8.2 5.1l2.3 2.2H18.1Zm10.7-6.5-2.2 6.4m10.9-7 4.1 7M8 27.4h5.4m40.8-6.1-5.6-.6" />
-      <circle cx="18.2" cy="32.2" r="5.2" />
-      <circle cx="46.7" cy="32.2" r="5.2" />
-      <path d="M25.1 34h14.7M4 31.5h7.1m42.6 0h7.7" />
-    </symbol>
-    <symbol id="icon-hero-glass" viewBox="0 0 56 48">
-      <path d="M8 37 13.5 13c.6-2.7 3-4.5 5.7-4.5h17.6c2.7 0 5.1 1.8 5.7 4.5L48 37H8Z" />
-      <path d="M13.8 32.5 18 14h20l4.2 18.5H13.8ZM19 41h18" />
-      <path d="m23 24 8-5m-5 10 8-5" />
-    </symbol>
-    <symbol id="icon-hero-courtesy" viewBox="0 0 64 48">
-      <path d="M3.5 31.5 7 24.8c1.3-2.5 4-4.1 8.5-5l7.6-7.2c3.4-3.2 8.4-4.4 12.9-3 4.5 1.4 8.5 3.8 12 7.3l8.8 2.7c3 1 4.7 3.4 4.7 6.4v5.5h-7.8a7.3 7.3 0 0 0-14.1 0H25.2a7.3 7.3 0 0 0-14.1 0H3.5Z" />
-      <path d="m17.3 19.5 8.2-5.8c2.7-1.9 6.2-2.4 9.3-1.4 3.3 1.1 6.4 3 9.1 5.5l1.8 1.7H17.3Zm10.5-6.4-2.1 6.4m10.4-6.7 4 6.7m-7.2-6.9v6.9M8 27.4h5.4m40.9-6.2-5.8-.5" />
-      <circle cx="18.2" cy="32.2" r="5.2" />
-      <circle cx="46.7" cy="32.2" r="5.2" />
-      <path d="M25.1 34h14.7M4 31.5h7.1m42.6 0h7.7" />
     </symbol>
     <symbol id="icon-bodywork" viewBox="0 0 48 48">
       <path d="M5 31h3l4-9c1-3 4-5 7-5h12c4 0 6 2 8 5l3 5 3 1v7h-5a5 5 0 0 0-10 0H19a5 5 0 0 0-10 0H5v-4Z" />
@@ -218,7 +249,12 @@ const projects = [
         :disabled="themeTransitioning"
         @click="toggleTheme"
       >
-        <svg class="icon" aria-hidden="true"><use href="#icon-spray-gun" /></svg>
+        <img
+          class="theme-toggle-pictogram"
+          src="/ressources/05-services-icons/peinture-automobile.png"
+          alt=""
+          aria-hidden="true"
+        />
         <span class="action-tooltip" role="tooltip" aria-hidden="true">
           {{ theme === 'dark' ? 'Peindre en clair' : 'Peindre en sombre' }}
         </span>
@@ -257,6 +293,54 @@ const projects = [
     </a>
   </dialog>
 
+  <dialog
+    ref="serviceDialog"
+    class="service-dialog"
+    aria-labelledby="service-dialog-title"
+    aria-describedby="service-dialog-description"
+    @cancel.prevent="closeServiceDialog"
+    @close="restoreServiceFocus"
+    @click.self="closeServiceDialog"
+  >
+    <div class="service-dialog-topbar">
+      <span>{{ String(activeServiceIndex + 1).padStart(2, '0') }} / {{ String(services.length).padStart(2, '0') }}</span>
+      <button autofocus class="service-dialog-close" type="button" aria-label="Fermer le détail du service" @click="closeServiceDialog">
+        <svg class="icon" aria-hidden="true"><use href="#icon-close" /></svg>
+      </button>
+    </div>
+    <div class="service-dialog-content" aria-live="polite">
+      <div class="service-dialog-heading">
+        <span
+          class="service-dialog-icon"
+          :class="{ 'courtesy-marker': activeService.courtesy }"
+          aria-hidden="true"
+        >
+          <img
+            class="service-pictogram"
+            :class="{ 'service-pictogram--original': activeService.preserveColor }"
+            :src="activeService.image"
+            alt=""
+          />
+        </span>
+        <div class="service-dialog-heading-copy">
+          <p class="eyebrow">Nos services</p>
+          <h2 id="service-dialog-title">{{ activeService.title }}</h2>
+        </div>
+      </div>
+      <p id="service-dialog-description">{{ activeService.description }}</p>
+    </div>
+    <div class="service-dialog-nav" aria-label="Navigation entre les services">
+      <button type="button" :aria-label="`Service précédent : ${services[(activeServiceIndex - 1 + services.length) % services.length].title}`" @click="showPreviousService">
+        <svg class="icon service-dialog-arrow-previous" aria-hidden="true"><use href="#icon-arrow" /></svg>
+        Précédent
+      </button>
+      <button type="button" :aria-label="`Service suivant : ${services[(activeServiceIndex + 1) % services.length].title}`" @click="showNextService">
+        Suivant
+        <svg class="icon" aria-hidden="true"><use href="#icon-arrow" /></svg>
+      </button>
+    </div>
+  </dialog>
+
   <main>
     <section id="accueil" class="hero">
       <div class="hero-shade"></div>
@@ -273,9 +357,9 @@ const projects = [
         </a>
       </div>
       <div class="hero-points" aria-label="Nos services">
-        <span><svg class="icon" aria-hidden="true"><use href="#icon-hero-bodywork" /></svg> Carrosserie &amp; peinture</span>
-        <span><svg class="icon" aria-hidden="true"><use href="#icon-hero-glass" /></svg> Remplacement de vitrages</span>
-        <span><svg class="icon" aria-hidden="true"><use href="#icon-hero-courtesy" /></svg> Véhicule de courtoisie</span>
+        <span><i class="hero-point-pictogram-wrap" aria-hidden="true"><img src="/ressources/05-services-icons/carrosserie.png" alt="" /></i> Carrosserie &amp; peinture</span>
+        <span><i class="hero-point-pictogram-wrap" aria-hidden="true"><img src="/ressources/05-services-icons/remplacement-vitrages.png" alt="" /></i> Remplacement de vitrages</span>
+        <span><i class="hero-point-pictogram-wrap courtesy-marker" aria-hidden="true"><img src="/ressources/05-services-icons/vehicule-courtoisie.png" alt="" /></i> Véhicule de courtoisie</span>
         <span><svg class="icon" aria-hidden="true"><use href="#icon-insurance" /></svg> Toutes assurances</span>
       </div>
     </section>
@@ -288,12 +372,29 @@ const projects = [
         </div>
       </div>
       <div class="services-grid">
-        <article v-for="service in services" :key="service.title" class="service-card">
-          <span class="service-icon" aria-hidden="true">
-            <svg class="icon"><use :href="`#icon-${service.icon}`" /></svg>
+        <button
+          v-for="(service, index) in services"
+          :key="service.title"
+          class="service-card"
+          type="button"
+          aria-haspopup="dialog"
+          :aria-label="`Découvrir le service ${service.title}`"
+          @click="openServiceDialog(index, $event)"
+        >
+          <span
+            class="service-icon"
+            :class="{ 'courtesy-marker': service.courtesy }"
+            aria-hidden="true"
+          >
+            <img
+              class="service-pictogram"
+              :class="{ 'service-pictogram--original': service.preserveColor }"
+              :src="service.image"
+              alt=""
+            />
           </span>
           <h3>{{ service.title }}</h3>
-        </article>
+        </button>
       </div>
     </section>
 
