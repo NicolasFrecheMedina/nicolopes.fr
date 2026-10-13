@@ -147,6 +147,18 @@ const services = [
   },
 ]
 
+const trustReasons = [
+  { icon: 'icon-trust-star', label: 'Un travail de qualité' },
+  { icon: 'icon-trust-team', label: 'Une équipe expérimentée' },
+  { icon: 'icon-trust-clock', label: 'Des délais maîtrisés' },
+  { icon: 'icon-trust-handshake', label: 'Accompagnement avec les assurances' },
+  {
+    image: '/ressources/05-services-icons/vehicule-courtoisie.png',
+    label: 'Véhicule de courtoisie',
+  },
+  { icon: 'icon-trust-shield', label: 'Garantie sur nos réparations' },
+]
+
 const activeService = computed(() => services[activeServiceIndex.value])
 
 function openServiceDialog(index, event) {
@@ -500,6 +512,27 @@ function showNextGalleryMedia() {
       <path d="m16 25 5 5 11-12" />
       <path d="M16 14c5-2 11-2 16 0" />
     </symbol>
+    <symbol id="icon-trust-star" viewBox="0 0 48 48">
+      <path d="m24 5.5 5.6 11.3 12.5 1.8-9 8.8 2.1 12.4L24 34l-11.2 5.8 2.1-12.4-9-8.8 12.5-1.8L24 5.5Z" />
+    </symbol>
+    <symbol id="icon-trust-team" viewBox="0 0 48 48">
+      <circle cx="24" cy="15" r="6" />
+      <circle cx="10.5" cy="20" r="4" />
+      <circle cx="37.5" cy="20" r="4" />
+      <path d="M12 40v-5c0-6.1 5.4-11 12-11s12 4.9 12 11v5M3.5 39v-4c0-4.8 3.8-8.8 8.5-9.4M44.5 39v-4c0-4.8-3.8-8.8-8.5-9.4" />
+    </symbol>
+    <symbol id="icon-trust-clock" viewBox="0 0 48 48">
+      <circle cx="24" cy="25" r="17" />
+      <path d="M24 15v11l7 4M18 4h12" />
+    </symbol>
+    <symbol id="icon-trust-handshake" viewBox="0 0 48 48">
+      <path d="m4 20 8-8 8 4-10 13-6-9Zm40 0-8-8-8 4 10 13 6-9Z" />
+      <path d="m15 28 8.5 8.5a3 3 0 0 0 4.2 0l9-9M18 18l5-3 8 7-3 3a4 4 0 0 1-5.5 0l-2-1.8M12 27l-2 2m26-2 2 2M18 31l-3 3m7 1-2 3m7-1 2 2" />
+    </symbol>
+    <symbol id="icon-trust-shield" viewBox="0 0 48 48">
+      <path d="m24 5 16 6v11c0 10.5-6.4 17.1-16 21-9.6-3.9-16-10.5-16-21V11l16-6Z" />
+      <path d="m16.5 24.5 5 5 10-11" />
+    </symbol>
   </svg>
 
   <header class="site-header">
@@ -538,14 +571,6 @@ function showNextGalleryMedia() {
     </nav>
 
     <div class="header-actions" role="group" aria-label="Actions de contact">
-      <a
-        class="header-action header-action-phone"
-        :href="phoneHref"
-        aria-label="Nous appeler"
-      >
-        <svg class="icon" aria-hidden="true"><use href="#icon-phone" /></svg>
-        <span class="action-tooltip" role="tooltip" aria-hidden="true">Nous appeler</span>
-      </a>
       <button
         ref="themeToggle"
         class="header-action theme-toggle"
@@ -564,6 +589,15 @@ function showNextGalleryMedia() {
           {{ theme === 'dark' ? 'Peindre en clair' : 'Peindre en sombre' }}
         </span>
       </button>
+      <a
+        class="header-action header-action-phone"
+        :href="phoneHref"
+        aria-label="Appeler le 05 58 89 42 81"
+      >
+        <svg class="icon" aria-hidden="true"><use href="#icon-phone" /></svg>
+        <span class="header-action-phone-label">05 58 89 42 81</span>
+        <span class="action-tooltip" role="tooltip" aria-hidden="true">Nous appeler</span>
+      </a>
     </div>
   </header>
 
@@ -792,7 +826,7 @@ function showNextGalleryMedia() {
           Vous restez libre de choisir votre réparateur après un sinistre.
         </p>
       </div>
-      <div id="pourquoi-nous" class="atelier-panel">
+      <div class="atelier-panel">
         <svg class="atelier-icon" aria-hidden="true"><use href="#icon-insurance" /></svg>
         <p class="eyebrow">Sinistre automobile</p>
         <h3>Le libre choix du réparateur</h3>
@@ -801,6 +835,23 @@ function showNextGalleryMedia() {
           Contactez-nous
           <svg class="icon" aria-hidden="true"><use href="#icon-arrow" /></svg>
         </a>
+      </div>
+    </section>
+
+    <section id="pourquoi-nous" class="trust-section" aria-labelledby="trust-title">
+      <div class="trust-section-inner">
+        <header class="trust-heading">
+          <h2 id="trust-title">Pourquoi nous faire confiance&nbsp;?</h2>
+        </header>
+        <ul class="trust-grid">
+          <li v-for="reason in trustReasons" :key="reason.label" class="trust-item">
+            <span class="trust-icon-wrap" aria-hidden="true">
+              <img v-if="reason.image" :src="reason.image" alt="" />
+              <svg v-else><use :href="`#${reason.icon}`" /></svg>
+            </span>
+            <span>{{ reason.label }}</span>
+          </li>
+        </ul>
       </div>
     </section>
   </main>
