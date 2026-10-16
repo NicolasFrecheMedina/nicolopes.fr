@@ -36,16 +36,27 @@ const logoSource = computed(() => (
     : '/ressources/01-logo/Nico-Lopes-navbar-light.png'
 ))
 const phoneHref = computed(() => `tel:${businessInfo.phone.replace(/\s/g, '')}`)
+const emailHref = computed(() => `mailto:${businessInfo.email}`)
 const directionsHref = 'https://www.google.com/maps/dir/?api=1&destination=43.8747615%2C-1.1543348'
 let sprayTimeout
+let lastContactTrigger = null
 
-function openContactDialog() {
+function openContactDialog(event) {
   menuOpen.value = false
+  lastContactTrigger = window.matchMedia('(max-width: 1060px)').matches
+    ? document.querySelector('.menu-toggle')
+    : event.currentTarget
   contactDialog.value?.showModal()
 }
 
 function closeContactDialog() {
   contactDialog.value?.close()
+  restoreContactFocus()
+}
+
+function restoreContactFocus() {
+  const trigger = lastContactTrigger
+  window.setTimeout(() => trigger?.focus(), 0)
 }
 
 function toggleTheme() {
@@ -485,6 +496,11 @@ function showNextGalleryMedia() {
       <path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" />
       <circle cx="12" cy="10" r="2.5" />
     </symbol>
+    <symbol id="icon-route" viewBox="0 0 24 24">
+      <circle cx="6" cy="18" r="2" />
+      <circle cx="18" cy="6" r="2" />
+      <path d="M8 18h2a3 3 0 0 0 3-3V9a3 3 0 0 1 3-3h0" />
+    </symbol>
     <symbol id="icon-close" viewBox="0 0 24 24">
       <path d="m6 6 12 12M18 6 6 18" />
     </symbol>
@@ -612,29 +628,38 @@ function showNextGalleryMedia() {
     aria-labelledby="contact-dialog-title"
     @cancel.prevent="closeContactDialog"
     @keydown.esc.prevent="closeContactDialog"
+    @close="restoreContactFocus"
     @click.self="closeContactDialog"
   >
     <div class="contact-dialog-header">
       <div>
-        <p class="eyebrow">Nico &amp; Lopes</p>
-        <h2 id="contact-dialog-title">Contactez-nous</h2>
+        <p class="eyebrow">Une question, un renseignement ?</p>
+        <h2 id="contact-dialog-title">CONTACTEZ-NOUS</h2>
+        <p class="contact-dialog-subtitle">Appelez-nous ou écrivez-nous directement.</p>
       </div>
       <button class="contact-dialog-close" type="button" aria-label="Fermer la fenêtre de contact" @click="closeContactDialog">
         <svg class="icon" aria-hidden="true"><use href="#icon-close" /></svg>
       </button>
     </div>
-    <p>Notre équipe est à votre écoute pour répondre à vos questions.</p>
-    <a class="contact-dialog-phone" :href="phoneHref">
-      <svg class="icon" aria-hidden="true"><use href="#icon-phone" /></svg>
-      {{ businessInfo.phone }}
-    </a>
-    <a class="contact-dialog-email" :href="`mailto:${businessInfo.email}`">
-      {{ businessInfo.email }}
-    </a>
-    <a class="button button-primary contact-dialog-form-link" href="#contact" @click="closeContactDialog">
-      Accéder au formulaire de contact
-      <svg class="icon" aria-hidden="true"><use href="#icon-arrow" /></svg>
-    </a>
+    <div class="contact-dialog-actions">
+      <a class="button button-primary contact-dialog-call" :href="phoneHref">
+        <svg class="icon" aria-hidden="true"><use href="#icon-phone" /></svg>
+        Nous appeler
+      </a>
+      <a class="button contact-dialog-write" :href="emailHref">
+        <svg class="icon" aria-hidden="true"><use href="#icon-mail" /></svg>
+        Nous écrire
+      </a>
+      <a
+        class="button contact-dialog-find"
+        :href="directionsHref"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <svg class="icon" aria-hidden="true"><use href="#icon-map-pin" /></svg>
+        Nous trouver
+      </a>
+    </div>
   </dialog>
 
   <dialog
@@ -900,11 +925,14 @@ function showNextGalleryMedia() {
               05 58 89 42 81
             </a>
             <a
-              class="location-action"
+              class="location-action location-route"
               :href="directionsHref"
               target="_blank"
               rel="noopener noreferrer"
-            >Itinéraire</a>
+            >
+              <svg class="icon" aria-hidden="true"><use href="#icon-map-pin" /></svg>
+              Itinéraire
+            </a>
           </div>
         </div>
       </div>
@@ -1077,54 +1105,8 @@ function showNextGalleryMedia() {
       </div>
       <div class="footer-column footer-email">
         <h2>Nous contacter</h2>
-        <span>{{ businessInfo.email }}</span>
+        <a :href="emailHref">{{ businessInfo.email }}</a>
       </div>
-    </div>
-
-    <div class="contact-area">
-      <div class="contact-intro">
-        <p class="eyebrow">Une question, un renseignement ?</p>
-        <h2>Contactez-nous</h2>
-        <p>Écrivez-nous et nous vous répondrons par e-mail.</p>
-        <span class="email-link">{{ businessInfo.email }}</span>
-        <a v-if="isRealisationsPage" class="button button-primary realisations-call" href="tel:0558894281">
-          <svg class="icon" aria-hidden="true"><use href="#icon-phone" /></svg>
-          Nous appeler
-        </a>
-      </div>
-
-      <form
-        class="contact-form"
-        name="contact"
-        method="POST"
-        data-netlify="true"
-        netlify-honeypot="bot-field"
-      >
-        <input type="hidden" name="form-name" value="contact" />
-        <p class="honeypot">
-          <label>Ne pas remplir : <input name="bot-field" /></label>
-        </p>
-        <label>
-          Nom *
-          <input name="name" type="text" autocomplete="name" placeholder="Votre nom" required />
-        </label>
-        <label>
-          E-mail *
-          <input name="email" type="email" autocomplete="email" placeholder="vous@exemple.fr" required />
-        </label>
-        <label>
-          Téléphone <span>(facultatif)</span>
-          <input name="phone" type="tel" autocomplete="tel" placeholder="Votre numéro de téléphone" />
-        </label>
-        <label>
-          Message *
-          <textarea name="message" rows="5" placeholder="Comment pouvons-nous vous aider ?" required></textarea>
-        </label>
-        <button class="button button-primary" type="submit">
-          Envoyer le message
-          <svg class="icon" aria-hidden="true"><use href="#icon-arrow" /></svg>
-        </button>
-      </form>
     </div>
 
     <div class="footer-bottom">
