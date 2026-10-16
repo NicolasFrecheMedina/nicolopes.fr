@@ -610,8 +610,35 @@ html.theme-color-transition .footer-bottom {
   transition: transform 160ms ease, background 160ms ease, border-color 160ms ease;
 }
 
-.hero-content > .button {
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
   margin-top: 30px;
+}
+
+.hero-directions {
+  min-height: 50px;
+  gap: 11px;
+  padding-inline: 23px;
+  border-color: rgb(255 255 255 / 38%);
+  border-radius: 3px;
+  color: #fff;
+  background: rgb(9 12 16 / 62%);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+}
+
+.hero-directions .icon {
+  width: 18px;
+  height: 18px;
+}
+
+.hero-directions:hover,
+.hero-directions:focus-visible {
+  border-color: rgb(255 255 255 / 72%);
+  background: rgb(9 12 16 / 82%);
 }
 
 .button:hover {

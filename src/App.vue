@@ -36,6 +36,7 @@ const logoSource = computed(() => (
     : '/ressources/01-logo/Nico-Lopes-navbar-light.png'
 ))
 const phoneHref = computed(() => `tel:${businessInfo.phone.replace(/\s/g, '')}`)
+const directionsHref = 'https://www.google.com/maps/dir/?api=1&destination=43.8747615%2C-1.1543348'
 let sprayTimeout
 
 function openContactDialog() {
@@ -480,6 +481,10 @@ function showNextGalleryMedia() {
     <symbol id="icon-phone" viewBox="0 0 24 24">
       <path d="M7.2 3.5 10 7.2 8.3 9.6a14.2 14.2 0 0 0 6.1 6.1l2.4-1.7 3.7 2.8-.7 3.1c-.2.9-1.1 1.5-2 1.4A17.8 17.8 0 0 1 2.7 6.6c-.1-.9.5-1.8 1.4-2l3.1-1.1Z" />
     </symbol>
+    <symbol id="icon-map-pin" viewBox="0 0 24 24">
+      <path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" />
+      <circle cx="12" cy="10" r="2.5" />
+    </symbol>
     <symbol id="icon-close" viewBox="0 0 24 24">
       <path d="m6 6 12 12M18 6 6 18" />
     </symbol>
@@ -740,10 +745,21 @@ function showNextGalleryMedia() {
         <p class="hero-copy">
           Carrosserie et peinture automobile, remplacement de vitrages et rénovation d’optiques.
         </p>
-        <a class="button button-primary hero-call" :href="phoneHref">
-          <svg class="icon" aria-hidden="true"><use href="#icon-phone" /></svg>
-          Nous appeler
-        </a>
+        <div class="hero-actions">
+          <a class="button button-primary hero-call" :href="phoneHref">
+            <svg class="icon" aria-hidden="true"><use href="#icon-phone" /></svg>
+            Nous appeler
+          </a>
+          <a
+            class="button hero-directions"
+            :href="directionsHref"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <svg class="icon" aria-hidden="true"><use href="#icon-map-pin" /></svg>
+            Itinéraire
+          </a>
+        </div>
       </div>
       <div class="hero-points" aria-label="Nos services">
         <span><i class="hero-point-pictogram-wrap" aria-hidden="true"><img src="/ressources/05-services-icons/carrosserie.png" alt="" /></i> Carrosserie &amp; peinture</span>
@@ -885,7 +901,7 @@ function showNextGalleryMedia() {
             </a>
             <a
               class="location-action"
-              href="https://www.google.com/maps/dir/?api=1&amp;destination=43.8747615%2C-1.1543348"
+              :href="directionsHref"
               target="_blank"
               rel="noopener noreferrer"
             >Itinéraire</a>
