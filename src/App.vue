@@ -8,6 +8,8 @@ const theme = ref(localStorage.getItem('nico-lopes-theme') === 'dark' ? 'dark' :
 const themeTransitioning = ref(false)
 const sprayActive = ref(false)
 const contactDialog = ref(null)
+const legalDialog = ref(null)
+const privacyDialog = ref(null)
 const serviceDialog = ref(null)
 const galleryDialog = ref(null)
 const galleryVideo = ref(null)
@@ -40,6 +42,7 @@ const emailHref = computed(() => `mailto:${businessInfo.email}`)
 const directionsHref = 'https://www.google.com/maps/dir/?api=1&destination=43.8747615%2C-1.1543348'
 let sprayTimeout
 let lastContactTrigger = null
+let lastLegalTrigger = null
 
 function openContactDialog(event) {
   menuOpen.value = false
@@ -56,6 +59,19 @@ function closeContactDialog() {
 
 function restoreContactFocus() {
   const trigger = lastContactTrigger
+  window.setTimeout(() => trigger?.focus(), 0)
+}
+
+function openLegalDialog(type, event) {
+  lastLegalTrigger = event.currentTarget
+  const dialog = type === 'privacy' ? privacyDialog.value : legalDialog.value
+  dialog?.showModal()
+}
+
+function closeLegalDialog(type) {
+  const dialog = type === 'privacy' ? privacyDialog.value : legalDialog.value
+  dialog?.close()
+  const trigger = lastLegalTrigger
   window.setTimeout(() => trigger?.focus(), 0)
 }
 
@@ -496,6 +512,10 @@ function showNextGalleryMedia() {
       <path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" />
       <circle cx="12" cy="10" r="2.5" />
     </symbol>
+    <symbol id="icon-external-link" viewBox="0 0 24 24">
+      <path d="M14 4h6v6m0-6-9 9" />
+      <path d="M18 13v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h5" />
+    </symbol>
     <symbol id="icon-route" viewBox="0 0 24 24">
       <circle cx="6" cy="18" r="2" />
       <circle cx="18" cy="6" r="2" />
@@ -876,6 +896,27 @@ function showNextGalleryMedia() {
               d’optiques.
             </p>
             <p>Un savoir-faire au service de votre véhicule.</p>
+            <a
+              class="google-reviews-link"
+              :href="businessInfo.googleReviewsUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              :title="`Note et nombre d’avis indiqués à titre informatif et non actualisés automatiquement.`"
+              :aria-label="`Consulter les avis Google de la Carrosserie Nico & Lopes : ${businessInfo.googleReviewRating}, ${businessInfo.googleReviewCount} avis`"
+            >
+              <svg class="google-review-logo" viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.05 5.05 0 0 1-2.2 3.31v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.09Z" />
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.99.66-2.25 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.15v2.84A11 11 0 0 0 12 23Z" />
+                <path fill="#FBBC05" d="M5.84 14.1a6.6 6.6 0 0 1 0-4.2V7.06H2.15a11 11 0 0 0 0 9.88l3.69-2.84Z" />
+                <path fill="#EA4335" d="M12 4.37c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 1.09 14.97 0 12 0a11 11 0 0 0-9.85 6.06L5.84 8.9C6.71 6.3 9.14 4.37 12 4.37Z" />
+              </svg>
+              <span class="google-review-rating">
+                <span class="google-review-stars" aria-hidden="true">★★★★★</span>
+                <strong>{{ businessInfo.googleReviewRating }}</strong>
+              </span>
+              <span class="google-review-count">{{ businessInfo.googleReviewCount }} avis Google</span>
+              <svg class="icon google-review-external" aria-hidden="true"><use href="#icon-external-link" /></svg>
+            </a>
           </div>
         </div>
       </div>
@@ -1076,42 +1117,250 @@ function showNextGalleryMedia() {
   </main>
 
   <footer id="contact" class="site-footer">
-    <div class="footer-top">
-      <a
-        class="brand footer-brand"
-        :href="isRealisationsPage ? '/#accueil' : '#accueil'"
-        aria-label="Nico & Lopes Carrosserie, accueil"
-        @click="openHomeSection($event, 'accueil')"
-      >
-        <img
-          class="brand-logo"
-          :src="logoSource"
-          alt="Carrosserie Nico & Lopes"
-          width="366"
-          height="263"
-        />
-      </a>
-      <div v-if="businessInfo.phone" class="footer-column">
-        <h2>Téléphone</h2>
-        <a :href="phoneHref">{{ businessInfo.phone }}</a>
+    <div class="footer-inner">
+      <div class="footer-top">
+        <a
+          class="footer-brand"
+          :href="isRealisationsPage ? '/#accueil' : '#accueil'"
+          aria-label="Nico & Lopes Carrosserie, accueil"
+          @click="openHomeSection($event, 'accueil')"
+        >
+          <img
+            :src="logoSource"
+            alt="Carrosserie Nico & Lopes"
+            width="366"
+            height="263"
+          />
+        </a>
+        <section class="footer-item footer-partner" aria-labelledby="footer-partner-title">
+          <h2 id="footer-partner-title">Partenaire</h2>
+          <a
+            href="https://www.motrio.fr/garage-reparateur/carrosserie-nicolopes-10278"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Motrio, partenaire de la Carrosserie Nico & Lopes — ouvre dans un nouvel onglet"
+          >
+            <img
+              src="/ressources/04-atelier/Motrio_Logo_Commercial.jpg"
+              alt="Motrio"
+            />
+          </a>
+        </section>
+        <section class="footer-item" aria-labelledby="footer-phone-title">
+          <h2 id="footer-phone-title">Téléphone</h2>
+          <a class="footer-contact-link" :href="phoneHref">
+            <svg class="icon" aria-hidden="true"><use href="#icon-phone" /></svg>
+            {{ businessInfo.phone }}
+          </a>
+          <ul class="footer-detail-list" aria-label="Horaires d'ouverture">
+            <li v-for="schedule in businessInfo.hours" :key="schedule.days">
+              <span>{{ schedule.days }}</span>
+              <span>{{ schedule.times }}</span>
+            </li>
+          </ul>
+        </section>
+        <section class="footer-item" aria-labelledby="footer-email-title">
+          <h2 id="footer-email-title">Contact</h2>
+          <a class="footer-contact-link" :href="emailHref">
+            <svg class="icon" aria-hidden="true"><use href="#icon-mail" /></svg>
+            Nous écrire
+          </a>
+          <a class="footer-detail footer-email-address" :href="emailHref">{{ businessInfo.email }}</a>
+        </section>
+        <section class="footer-item" aria-labelledby="footer-directions-title">
+          <h2 id="footer-directions-title">Itinéraire</h2>
+          <a
+            class="footer-contact-link"
+            :href="directionsHref"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <svg class="icon" aria-hidden="true"><use href="#icon-map-pin" /></svg>
+            Nous trouver
+          </a>
+          <address class="footer-detail footer-address">{{ businessInfo.address }}</address>
+        </section>
       </div>
-      <div v-if="businessInfo.address" class="footer-column">
-        <h2>Adresse</h2>
-        <p>{{ businessInfo.address }}</p>
-      </div>
-      <div v-if="businessInfo.hours" class="footer-column">
-        <h2>Horaires</h2>
-        <p>{{ businessInfo.hours }}</p>
-      </div>
-      <div class="footer-column footer-email">
-        <h2>Nous contacter</h2>
-        <a :href="emailHref">{{ businessInfo.email }}</a>
-      </div>
-    </div>
 
-    <div class="footer-bottom">
-      <span>© Nico &amp; Lopes Carrosserie</span>
-      <span>Castets</span>
+      <div class="footer-bottom">
+        <span>© 2026 Carrosserie Nico &amp; Lopes</span>
+        <nav class="footer-legal-links" aria-label="Informations légales">
+          <button type="button" @click="openLegalDialog('legal', $event)">Mentions légales</button>
+          <span aria-hidden="true">·</span>
+          <button type="button" @click="openLegalDialog('privacy', $event)">Confidentialité</button>
+        </nav>
+      </div>
     </div>
   </footer>
+
+  <dialog
+    ref="legalDialog"
+    class="info-dialog"
+    aria-labelledby="legal-dialog-title"
+    @cancel.prevent="closeLegalDialog('legal')"
+    @keydown.esc.prevent="closeLegalDialog('legal')"
+    @click.self="closeLegalDialog('legal')"
+  >
+    <header class="info-dialog-header">
+      <h2 id="legal-dialog-title">MENTIONS LÉGALES</h2>
+      <button class="contact-dialog-close" type="button" aria-label="Fermer les mentions légales" @click="closeLegalDialog('legal')">
+        <svg class="icon" aria-hidden="true"><use href="#icon-close" /></svg>
+      </button>
+    </header>
+    <div class="info-dialog-content">
+      <p>
+        Les présentes mentions légales précisent les informations relatives au site de la
+        Carrosserie Nico &amp; Lopes et à son éditeur.
+      </p>
+      <section>
+        <h3>Éditeur du site</h3>
+        <p>Nom commercial : Carrosserie Nico &amp; Lopes.</p>
+        <p>Raison sociale : [RAISON SOCIALE À RENSEIGNER].</p>
+        <p>Forme juridique : [FORME JURIDIQUE À RENSEIGNER].</p>
+        <p>Adresse de l’établissement : {{ businessInfo.address }}.</p>
+        <p>Adresse du siège social : [ADRESSE DU SIÈGE SOCIAL À RENSEIGNER].</p>
+      </section>
+      <section>
+        <h3>Immatriculation</h3>
+        <p>SIREN : [SIREN À RENSEIGNER].</p>
+        <p>SIRET : [SIRET À RENSEIGNER].</p>
+        <p>Immatriculation au RCS ou au répertoire des métiers, le cas échéant : [IMMATRICULATION À RENSEIGNER].</p>
+      </section>
+      <section>
+        <h3>Contact et directeur de la publication</h3>
+        <p>
+          Téléphone : <a :href="phoneHref">{{ businessInfo.phone }}</a>.
+          E-mail : <a :href="emailHref">{{ businessInfo.email }}</a>.
+        </p>
+        <p>Directeur de la publication : [RESPONSABLE DE PUBLICATION À RENSEIGNER].</p>
+      </section>
+      <section>
+        <h3>Hébergement</h3>
+        <p>Hébergeur : [NOM DE L’HÉBERGEUR À RENSEIGNER].</p>
+        <p>Adresse et coordonnées de l’hébergeur : [COORDONNÉES DE L’HÉBERGEUR À RENSEIGNER].</p>
+      </section>
+      <section>
+        <h3>Propriété intellectuelle</h3>
+        <p>
+          Les contenus présents sur ce site, notamment les textes, photographies, graphismes et
+          éléments visuels, sont protégés par les règles relatives à la propriété intellectuelle.
+          Les droits appartiennent à la Carrosserie Nico &amp; Lopes ou à leurs titulaires respectifs.
+          Toute reproduction ou représentation non autorisée est interdite.
+        </p>
+      </section>
+      <section>
+        <h3>Liens externes et responsabilités</h3>
+        <p>
+          Le site peut proposer des liens vers des services ou sites tiers. La Carrosserie Nico
+          &amp; Lopes n’en maîtrise ni le contenu ni les politiques et invite les visiteurs à
+          consulter leurs propres informations légales et de confidentialité.
+        </p>
+        <p>
+          Les informations publiées sur ce site sont fournies à titre informatif. Malgré le soin
+          apporté à leur mise à jour, l’éditeur ne peut garantir l’absence d’erreurs ou
+          d’omissions.
+        </p>
+      </section>
+    </div>
+  </dialog>
+
+  <dialog
+    ref="privacyDialog"
+    class="info-dialog"
+    aria-labelledby="privacy-dialog-title"
+    @cancel.prevent="closeLegalDialog('privacy')"
+    @keydown.esc.prevent="closeLegalDialog('privacy')"
+    @click.self="closeLegalDialog('privacy')"
+  >
+    <header class="info-dialog-header">
+      <h2 id="privacy-dialog-title">CONFIDENTIALITÉ</h2>
+      <button class="contact-dialog-close" type="button" aria-label="Fermer la politique de confidentialité" @click="closeLegalDialog('privacy')">
+        <svg class="icon" aria-hidden="true"><use href="#icon-close" /></svg>
+      </button>
+    </header>
+    <div class="info-dialog-content">
+      <section>
+        <h3>Responsable du traitement</h3>
+        <p>
+          Le responsable du traitement est [RAISON SOCIALE ET RESPONSABLE DU TRAITEMENT À
+          RENSEIGNER]. Vous pouvez le contacter à l’adresse
+          <a :href="emailHref">{{ businessInfo.email }}</a> ou par téléphone au
+          <a :href="phoneHref">{{ businessInfo.phone }}</a>.
+        </p>
+      </section>
+      <section>
+        <h3>Prise de contact par téléphone ou e-mail</h3>
+        <p>
+          Si vous appelez ou écrivez à la carrosserie, les coordonnées et les informations que vous
+          communiquez sont utilisées pour recevoir votre demande, vous répondre et en assurer le
+          suivi. Veuillez éviter de transmettre des informations qui ne sont pas nécessaires à
+          votre demande.
+        </p>
+        <p>
+          La base légale et la durée de conservation des échanges sont à préciser selon la nature
+          de la demande : [BASE LÉGALE ET DURÉE DE CONSERVATION À RENSEIGNER].
+        </p>
+      </section>
+      <section>
+        <h3>Carte, polices et services tiers</h3>
+        <ul>
+          <li>
+            Une carte Google Maps est intégrée à la page d’accueil. Son affichage peut transmettre
+            à Google des données techniques, telles que votre adresse IP, et entraîner l’utilisation
+            de traceurs soumis aux règles de Google.
+          </li>
+          <li>
+            Les polices de caractères sont fournies par Google Fonts. Le chargement de ces polices
+            peut transmettre à Google des données techniques liées à votre connexion.
+          </li>
+          <li>
+            Les liens vers Google Maps et Motrio ouvrent des services tiers. Lorsque vous les
+            suivez, ces services appliquent leurs propres conditions et politiques de confidentialité.
+          </li>
+        </ul>
+        <p>
+          Pour en savoir plus, consultez les politiques de confidentialité de Google et des autres
+          services concernés. Les modalités de dépôt des traceurs par ces services et, le cas
+          échéant, les mesures de consentement applicables doivent être précisées avant publication.
+        </p>
+      </section>
+      <section>
+        <h3>Préférence d’affichage et données techniques</h3>
+        <ul>
+          <li>
+            Le choix du thème clair ou sombre est conservé dans le stockage local de votre
+            navigateur afin de mémoriser votre préférence. Il n’est pas transmis par le site.
+          </li>
+          <li>
+            L’hébergeur peut traiter des données techniques nécessaires à la diffusion et à la
+            sécurité du site, notamment dans ses journaux de connexion. Les catégories de données,
+            leur durée de conservation et les coordonnées de l’hébergeur sont à renseigner :
+            [INFORMATIONS DE L’HÉBERGEUR ET DURÉES À RENSEIGNER].
+          </li>
+        </ul>
+      </section>
+      <section>
+        <h3>Destinataires et transferts</h3>
+        <p>
+          Les informations sont destinées aux personnes habilitées à traiter votre demande et aux
+          prestataires techniques intervenant pour le fonctionnement du site. Google et les autres
+          services tiers peuvent traiter des données lorsque leurs contenus sont chargés ou que
+          vous suivez leurs liens. Les lieux de traitement et les éventuels transferts hors de
+          l’Espace économique européen sont à préciser selon les services retenus :
+          [DESTINATAIRES ET GARANTIES DE TRANSFERT À RENSEIGNER].
+        </p>
+      </section>
+      <section>
+        <h3>Vos droits</h3>
+        <p>
+          Dans les conditions prévues par la réglementation, vous pouvez demander l’accès à vos
+          données, leur rectification ou leur effacement, la limitation de leur traitement et vous
+          opposer à celui-ci. Vous pouvez également demander la portabilité des données lorsque ce
+          droit s’applique et introduire une réclamation auprès de la Commission nationale de
+          l’informatique et des libertés (CNIL).
+        </p>
+        <p>Pour exercer vos droits, contactez : [CONTACT DU RESPONSABLE DU TRAITEMENT À RENSEIGNER].</p>
+      </section>
+    </div>
+  </dialog>
 </template>
