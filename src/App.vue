@@ -814,27 +814,83 @@ function showNextGalleryMedia() {
       </div>
     </section>
 
-    <section id="atelier" class="section about-section">
+    <section id="atelier" class="section about-section" aria-labelledby="about-title">
       <div class="about-copy">
         <p class="eyebrow">À votre service à Castets</p>
-        <h2>La carrosserie Nico &amp; Lopes</h2>
-        <p>
-          Votre carrosserie prend en charge les réparations et travaux de peinture automobile,
-          le remplacement de vitrages et la rénovation d’optiques.
-        </p>
-        <p class="free-choice">
-          Vous restez libre de choisir votre réparateur après un sinistre.
-        </p>
+        <h2 id="about-title">La carrosserie Nico &amp; Lopes</h2>
+        <div class="about-copy-body">
+          <img
+            class="about-photo"
+            :class="{ 'about-photo--dark': theme === 'dark' }"
+            :src="theme === 'dark'
+              ? '/ressources/04-atelier/c-v02.jpg'
+              : '/ressources/04-atelier/c-v01.jpg'"
+            alt="La carrosserie Nico &amp; Lopes, sa façade et une voiture devant l’atelier"
+            loading="lazy"
+          />
+          <div class="about-copy-description">
+            <p>
+              Située à Castets, la carrosserie Nico &amp; Lopes vous accompagne dans vos travaux de
+              carrosserie et peinture automobile, le remplacement de vitrages et la rénovation
+              d’optiques.
+            </p>
+            <p>Un savoir-faire au service de votre véhicule.</p>
+          </div>
+        </div>
       </div>
-      <div class="atelier-panel">
-        <svg class="atelier-icon" aria-hidden="true"><use href="#icon-insurance" /></svg>
-        <p class="eyebrow">Sinistre automobile</p>
-        <h3>Le libre choix du réparateur</h3>
-        <p>Vous pouvez choisir la carrosserie qui répare votre véhicule.</p>
-        <a class="text-link" href="#contact">
-          Contactez-nous
-          <svg class="icon" aria-hidden="true"><use href="#icon-arrow" /></svg>
-        </a>
+
+      <div class="free-choice-column" aria-labelledby="free-choice-title">
+        <p class="eyebrow">Après un sinistre</p>
+        <h3 id="free-choice-title">Le libre choix du réparateur</h3>
+        <ol class="free-choice-list">
+          <li>
+            <span class="free-choice-number" aria-hidden="true">01</span>
+            <div>
+              <h4>Vous avez un véhicule de courtoisie</h4>
+              <p>Même si votre carrossier préféré n'est pas agréé par votre assureur, ça ne change rien !</p>
+            </div>
+          </li>
+          <li>
+            <span class="free-choice-number" aria-hidden="true">02</span>
+            <div>
+              <h4>Vous ne faites pas l'avance des frais</h4>
+              <p>C'est votre carrossier qui se met en lien avec votre assurance (agrément ou non).</p>
+            </div>
+          </li>
+          <li>
+            <span class="free-choice-number" aria-hidden="true">03</span>
+            <div>
+              <h4>Vous pouvez choisir la pièce de réemploi</h4>
+              <p>Dans tous les cas vous avez le choix entre pièces neuves ou pièces de réemploi !</p>
+            </div>
+          </li>
+        </ol>
+      </div>
+
+      <div class="location-column" aria-labelledby="location-title">
+        <iframe
+          class="atelier-map"
+          src="https://maps.google.com/maps?q=43.8747615%2C-1.1543348&z=16&output=embed"
+          title="Carte Google Maps de la Carrosserie Nico &amp; Lopes à Castets"
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+        ></iframe>
+        <div class="location-details">
+          <h3 id="location-title">Carrosserie Nico &amp; Lopes</h3>
+          <address>83 Rue Friques O, 40260 Castets, Landes</address>
+          <div class="location-actions">
+            <a class="location-action location-action-primary location-phone" href="tel:0558894281">
+              <svg class="icon" aria-hidden="true"><use href="#icon-phone" /></svg>
+              05 58 89 42 81
+            </a>
+            <a
+              class="location-action"
+              href="https://www.google.com/maps/dir/?api=1&amp;destination=43.8747615%2C-1.1543348"
+              target="_blank"
+              rel="noopener noreferrer"
+            >Itinéraire</a>
+          </div>
+        </div>
       </div>
     </section>
 
