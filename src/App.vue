@@ -14,6 +14,7 @@ const privacyDialog = ref(null)
 const serviceDialog = ref(null)
 const galleryDialog = ref(null)
 const galleryVideo = ref(null)
+const galleryVideoPlaying = ref(false)
 const realisationsVideoRefs = ref([])
 const activeServiceIndex = ref(0)
 const activeGalleryProjectIndex = ref(0)
@@ -25,6 +26,10 @@ let lastServiceTrigger = null
 let lastGalleryTrigger = null
 const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
 const realisationsVideoPaused = ref(reducedMotionQuery.matches)
+const introVisible = ref(!reducedMotionQuery.matches)
+const introOpening = ref(false)
+let introAnimationFrame = null
+let introFallbackTimeout = null
 const normalisePath = (path) => path.replace(/\/+$/, '') || '/'
 const currentPath = ref(normalisePath(window.location.pathname))
 const isRealisationsPage = computed(() => currentPath.value === '/realisations')
@@ -310,8 +315,50 @@ function toggleTheme() {
   }, 1500)
 }
 
+function clearIntroSchedule() {
+  window.clearTimeout(introFallbackTimeout)
+  introFallbackTimeout = null
+  if (introAnimationFrame !== null) {
+    window.cancelAnimationFrame(introAnimationFrame)
+    introAnimationFrame = null
+  }
+}
+
+function finishIntro() {
+  clearIntroSchedule()
+  introOpening.value = false
+  introVisible.value = false
+}
+
+function scheduleIntroOpening() {
+  clearIntroSchedule()
+  introOpening.value = false
+  nextTick(() => {
+    if (!introVisible.value || reducedMotionQuery.matches) return
+    introAnimationFrame = window.requestAnimationFrame(() => {
+      introAnimationFrame = window.requestAnimationFrame(() => {
+        introOpening.value = true
+        introAnimationFrame = null
+      })
+    })
+  })
+  introFallbackTimeout = window.setTimeout(finishIntro, 1600)
+}
+
+function startIntro() {
+  if (reducedMotionQuery.matches || introVisible.value) return
+  introVisible.value = true
+  scheduleIntroOpening()
+}
+
+function handleIntroTransitionEnd(event) {
+  if (event.propertyName === 'transform') finishIntro()
+}
+
 onBeforeUnmount(() => {
   window.clearTimeout(sprayTimeout)
+  window.clearTimeout(heroVideoReleaseTimeout)
+  clearIntroSchedule()
   prepareScrollReveals()
   if (scrollAnimationFrame !== null) window.cancelAnimationFrame(scrollAnimationFrame)
   window.removeEventListener('scroll', scheduleScrollEffects)
@@ -332,6 +379,9 @@ onMounted(() => {
   })
   if (isRealisationsPage.value && !realisationsVideoPaused.value) {
     afterPageRender(playActiveRealisationsVideo)
+  }
+  if (introVisible.value) {
+    scheduleIntroOpening()
   }
 })
 
@@ -412,17 +462,21 @@ const demonstrationsPath = '/ressources/02-demonstration/'
 const videosPath = '/ressources/03-video/'
 const realisationsVideoPoster = '/ressources/03-video/realisations-poster-640.webp'
 const realisationsVideos = [
-  '/ressources/03-video/WhatsApp Video 2026-10-08 at 07.47.39.mp4',
-  '/ressources/03-video/WhatsApp Video 2026-10-08 at 07.47.40.mp4',
-  '/ressources/03-video/WhatsApp Video 2026-10-08 at 07.47.41.mp4',
+  '/ressources/03-video/video-v1-hero.mp4',
+  '/ressources/03-video/video-v4-hero.mp4',
+  '/ressources/03-video/video-v3-hero.mp4',
 ]
+const realisationsVideoSources = ref(realisationsVideos.map((video, index) => (
+  index === 0 && !reducedMotionQuery.matches ? video : ''
+)))
+let heroVideoReleaseTimeout
 const realisationProjects = [
   {
     id: 'V1',
     title: 'Remise en état de carrosserie',
     images: ['V1-01.jpeg', 'V1-02.jpeg', 'V1-03.jpeg', 'V1-04.jpeg'],
     video: {
-      src: `${videosPath}WhatsApp Video 2026-10-08 at 07.47.39.mp4`,
+      src: `${videosPath}video-v1-full.mp4`,
       poster: `${videosPath}video-v1-640.webp`,
     },
     comparison: {
@@ -454,7 +508,7 @@ const realisationProjects = [
     title: 'Travaux réalisés à l’atelier',
     images: ['V3-01.jpeg', 'V3-02.jpeg', 'V3-03.jpeg'],
     video: {
-      src: `${videosPath}WhatsApp Video 2026-10-08 at 07.47.41.mp4`,
+      src: `${videosPath}video-v3-full.mp4`,
       poster: `${videosPath}video-v3-640.webp`,
     },
   },
@@ -463,7 +517,7 @@ const realisationProjects = [
     title: 'Rénovation de carrosserie',
     images: ['V4-00.jpeg', 'V4-01.jpeg', 'V4-02.jpeg', 'V4-03.jpeg', 'V4-04.jpeg', 'V4-05.jpeg'],
     video: {
-      src: `${videosPath}WhatsApp Video 2026-10-08 at 07.47.40.mp4`,
+      src: `${videosPath}video-v4-full.mp4`,
       poster: `${videosPath}video-v4-640.webp`,
     },
     comparison: {
@@ -588,6 +642,37 @@ function pauseRealisationsVideos() {
   realisationsVideoRefs.value.forEach((video) => video?.pause())
 }
 
+async function ensureRealisationsVideoSource(index) {
+  if (!realisationsVideoSources.value[index]) {
+    realisationsVideoSources.value[index] = realisationsVideos[index]
+    await nextTick()
+  }
+  return realisationsVideoRefs.value[index]
+}
+
+function prepareNextRealisationsVideo(videoIndex, event) {
+  if (videoIndex !== activeRealisationsVideoIndex.value) return
+  const video = event.currentTarget
+  if (!Number.isFinite(video.duration) || video.duration - video.currentTime > 3) return
+
+  const nextIndex = (videoIndex + 1) % realisationsVideos.length
+  if (realisationsVideoSources.value[nextIndex]) return
+  realisationsVideoSources.value[nextIndex] = realisationsVideos[nextIndex]
+}
+
+function releaseInactiveRealisationsVideos() {
+  window.clearTimeout(heroVideoReleaseTimeout)
+  heroVideoReleaseTimeout = window.setTimeout(() => {
+    realisationsVideoRefs.value.forEach((video, index) => {
+      if (index === activeRealisationsVideoIndex.value) return
+      video?.pause()
+      realisationsVideoSources.value[index] = ''
+      video?.removeAttribute('src')
+      video?.load()
+    })
+  }, 650)
+}
+
 async function playActiveRealisationsVideo() {
   if (!isRealisationsPage.value || realisationsVideoPaused.value) return
 
@@ -595,7 +680,7 @@ async function playActiveRealisationsVideo() {
     if (index !== activeRealisationsVideoIndex.value) video?.pause()
   })
 
-  const activeVideo = realisationsVideoRefs.value[activeRealisationsVideoIndex.value]
+  const activeVideo = await ensureRealisationsVideoSource(activeRealisationsVideoIndex.value)
   if (!activeVideo) return
 
   try {
@@ -613,6 +698,7 @@ function showNextRealisationsVideo(endedIndex) {
     const nextVideo = realisationsVideoRefs.value[activeRealisationsVideoIndex.value]
     if (nextVideo) nextVideo.currentTime = 0
     playActiveRealisationsVideo()
+    releaseInactiveRealisationsVideos()
   })
 }
 
@@ -628,6 +714,7 @@ function toggleRealisationsVideo() {
 function handleReducedMotionChange(event) {
   realisationsVideoPaused.value = event.matches
   if (event.matches) {
+    finishIntro()
     pauseRealisationsVideos()
     revealObserver?.disconnect()
     document.querySelectorAll('.scroll-reveal').forEach((element) => element.classList.add('is-revealed'))
@@ -692,13 +779,41 @@ function openHomeSection(event, sectionId = 'accueil') {
   })
 }
 
+function openHomeFromNavbarLogo(event) {
+  menuOpen.value = false
+  const opensElsewhere = event.button !== 0
+    || event.ctrlKey
+    || event.metaKey
+    || event.shiftKey
+    || event.altKey
+    || event.currentTarget.target === '_blank'
+
+  if (event.defaultPrevented || opensElsewhere) return
+  startIntro()
+  openHomeSection(event, 'accueil')
+}
+
 function stopGalleryVideo() {
-  if (!galleryVideo.value) return
-  galleryVideo.value.pause()
-  galleryVideo.value.currentTime = 0
+  galleryVideoPlaying.value = false
+  if (galleryVideo.value) {
+    galleryVideo.value.pause()
+    galleryVideo.value.currentTime = 0
+  }
+}
+
+async function playGalleryVideo() {
+  const video = galleryVideo.value
+  if (!video) return
+  if (video.ended) video.currentTime = 0
+  try {
+    await video.play()
+  } catch {
+    galleryVideoPlaying.value = false
+  }
 }
 
 function openGallery(projectIndex, mediaIndex, event) {
+  galleryVideoPlaying.value = false
   activeGalleryProjectIndex.value = projectIndex
   activeGalleryMediaIndex.value = mediaIndex
   lastGalleryTrigger = event.currentTarget
@@ -731,6 +846,26 @@ function showNextGalleryMedia() {
 </script>
 
 <template>
+  <div
+    v-if="introVisible"
+    class="garage-intro"
+    :class="{ 'is-opening': introOpening }"
+    aria-hidden="true"
+  >
+    <div class="garage-intro-door" @transitionend.self="handleIntroTransitionEnd">
+      <div class="garage-intro-logo-wrap">
+        <img
+          src="/ressources/01-logo/Nico-Lopes-navbar-366.webp"
+          srcset="/ressources/01-logo/Nico-Lopes-navbar-144.webp 144w, /ressources/01-logo/Nico-Lopes-navbar-366.webp 366w"
+          sizes="(max-width: 760px) 144px, 210px"
+          width="366"
+          height="263"
+          alt=""
+        />
+      </div>
+    </div>
+  </div>
+
   <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
     <symbol id="icon-arrow" viewBox="0 0 24 24">
       <path d="M4 12h15m-6-6 6 6-6 6" />
@@ -815,7 +950,7 @@ function showNextGalleryMedia() {
       class="brand"
       :href="isRealisationsPage ? '/#accueil' : '#accueil'"
       aria-label="Nico & Lopes Carrosserie, accueil"
-      @click="openHomeSection($event, 'accueil')"
+      @click="openHomeFromNavbarLogo"
     >
       <img
         class="brand-logo"
@@ -1014,8 +1149,20 @@ function showNextGalleryMedia() {
           :poster="activeGalleryMedia.poster"
           controls
           playsinline
-          preload="metadata"
+          preload="none"
+          @play="galleryVideoPlaying = true"
+          @pause="galleryVideoPlaying = false"
+          @ended="galleryVideoPlaying = false"
         ></video>
+        <button
+          v-if="activeGalleryMedia.type === 'video' && !galleryVideoPlaying"
+          class="gallery-lightbox-play"
+          type="button"
+          :aria-label="`Lire ${activeGalleryMedia.alt.toLowerCase()}`"
+          @click="playGalleryVideo"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7Z" /></svg>
+        </button>
         <figcaption>
           {{ activeGalleryMediaIndex + 1 }} / {{ activeGalleryMediaCount }}
         </figcaption>
@@ -1267,12 +1414,13 @@ function showNextGalleryMedia() {
           :ref="(element) => setRealisationsVideoRef(element, videoIndex)"
           class="realisations-hero-video"
           :class="{ 'is-active': videoIndex === activeRealisationsVideoIndex }"
-          :src="video"
+          :src="realisationsVideoSources[videoIndex] || undefined"
           :poster="realisationsVideoPoster"
           :autoplay="videoIndex === activeRealisationsVideoIndex && !realisationsVideoPaused"
           muted
           playsinline
-          preload="metadata"
+          :preload="realisationsVideoSources[videoIndex] ? 'auto' : 'none'"
+          @timeupdate="prepareNextRealisationsVideo(videoIndex, $event)"
           @ended="showNextRealisationsVideo(videoIndex)"
         ></video>
       </div>
