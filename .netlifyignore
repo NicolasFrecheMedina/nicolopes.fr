@@ -1,0 +1,6 @@
+media-originals/
+.responsive-final-audit/
+.lighthouse/
+lighthouse-*.html
+lighthouse-*.json
+*.tmp

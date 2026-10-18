@@ -1,0 +1,22 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+  VITE_ROBOTS_NOINDEX = "true"
+
+[[headers]]
+  for = "/"
+  [headers.values]
+    Content-Type = "text/html; charset=UTF-8"
+
+[[headers]]
+  for = "/realisations"
+  [headers.values]
+    Content-Type = "text/html; charset=UTF-8"
+
+[[headers]]
+  for = "/realisations/"
+  [headers.values]
+    Content-Type = "text/html; charset=UTF-8"

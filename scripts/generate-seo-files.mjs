@@ -3,6 +3,9 @@ import { resolve } from 'node:path'
 
 const outputDirectory = resolve('dist')
 const configuredUrl = process.env.VITE_SITE_URL?.trim()
+const deploymentContext = process.env.CONTEXT?.trim().toLowerCase()
+const noIndexRequested = process.env.VITE_ROBOTS_NOINDEX?.trim().toLowerCase() === 'true'
+const isNonIndexable = noIndexRequested || ['deploy-preview', 'branch-deploy'].includes(deploymentContext)
 let siteUrl = null
 
 if (configuredUrl) {
@@ -20,14 +23,14 @@ await mkdir(outputDirectory, { recursive: true })
 
 const robots = [
   'User-agent: *',
-  'Allow: /',
-  ...(siteUrl ? ['', `Sitemap: ${siteUrl}/sitemap.xml`] : []),
+  isNonIndexable ? 'Disallow: /' : 'Allow: /',
+  ...(!isNonIndexable && siteUrl ? ['', `Sitemap: ${siteUrl}/sitemap.xml`] : []),
   '',
 ].join('\n')
 
 await writeFile(resolve(outputDirectory, 'robots.txt'), robots, 'utf8')
 
-if (siteUrl) {
+if (siteUrl || isNonIndexable) {
   const pages = [
     {
       file: resolve(outputDirectory, 'index.html'),
@@ -44,12 +47,21 @@ if (siteUrl) {
   for (const page of pages) {
     const html = await readFile(page.file, 'utf8')
     const absoluteMetadata = [
-      `    <link rel="canonical" href="${page.url}" />`,
-      `    <meta property="og:url" content="${page.url}" />`,
-      `    <meta property="og:image" content="${page.image}" />`,
-      `    <meta name="twitter:image" content="${page.image}" />`,
+      ...(isNonIndexable ? ['    <meta name="robots" content="noindex, nofollow" />'] : []),
+      ...(siteUrl
+        ? [
+            `    <link rel="canonical" href="${page.url}" />`,
+            `    <meta property="og:url" content="${page.url}" />`,
+            `    <meta property="og:image" content="${page.image}" />`,
+            `    <meta name="twitter:image" content="${page.image}" />`,
+          ]
+        : []),
     ].join('\n')
     await writeFile(page.file, html.replace('</head>', `${absoluteMetadata}\n  </head>`), 'utf8')
+  }
+
+  if (!siteUrl || isNonIndexable) {
+    process.exit(0)
   }
 
   const sitemap = [

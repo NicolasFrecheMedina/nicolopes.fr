@@ -1514,7 +1514,7 @@ function showNextGalleryMedia() {
             <button
               type="button"
               :disabled="galleryPage(project) === 1"
-              :aria-label="`Page précédente de la galerie ${project.title}`"
+              :aria-label="`Précédent — galerie ${project.title}`"
               @click="showPreviousGalleryPage(project)"
             >
               <svg class="icon gallery-arrow-previous" aria-hidden="true"><use href="#icon-arrow" /></svg>
@@ -1524,7 +1524,7 @@ function showNextGalleryMedia() {
             <button
               type="button"
               :disabled="galleryPage(project) === galleryPageCount(project)"
-              :aria-label="`Page suivante de la galerie ${project.title}`"
+              :aria-label="`Suivant — galerie ${project.title}`"
               @click="showNextGalleryPage(project)"
             >
               Suivant
