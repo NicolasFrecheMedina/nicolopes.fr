@@ -3238,6 +3238,216 @@ html.theme-color-transition .footer-bottom {
   }
 }
 
+@media (min-width: 561px) and (max-width: 1060px) {
+  .about-section {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "about"
+      "location"
+      "free";
+    justify-items: center;
+    gap: 34px;
+  }
+
+  .about-copy,
+  .location-column,
+  .free-choice-column {
+    width: min(100%, 720px);
+  }
+
+  .about-copy-body {
+    grid-template-columns: minmax(180px, 220px) minmax(0, 1fr);
+    grid-template-areas:
+      "photo copy"
+      "reviews reviews";
+    gap: 18px;
+  }
+
+  .about-photo {
+    grid-area: photo;
+    max-width: 220px;
+  }
+
+  .about-copy-description {
+    display: contents;
+  }
+
+  .about-copy-text {
+    grid-area: copy;
+    align-self: center;
+  }
+
+  .google-reviews-link {
+    grid-area: reviews;
+    margin-top: 4px;
+  }
+
+  .location-column {
+    grid-template-rows: auto auto;
+  }
+
+  .atelier-map {
+    height: clamp(260px, 34vw, 340px);
+    min-height: 260px;
+    aspect-ratio: auto;
+  }
+
+  .location-actions {
+    justify-content: center;
+  }
+
+  .trust-grid {
+    width: min(100%, 900px);
+    margin-inline: auto;
+  }
+
+  .trust-item {
+    gap: 12px;
+    text-align: center;
+  }
+
+  .trust-icon-wrap {
+    margin-inline: auto;
+  }
+
+  .footer-top {
+    width: min(100%, 720px);
+    margin-inline: auto;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .footer-brand,
+  .footer-partner,
+  .footer-directions {
+    grid-column: auto;
+    width: 100%;
+  }
+
+  .footer-brand {
+    order: 5;
+    align-items: center;
+    justify-self: center;
+    padding: 22px 0 5px;
+  }
+
+  .footer-partner {
+    order: 1;
+    align-items: flex-start;
+  }
+
+  .footer-partner h2 {
+    align-self: stretch;
+    text-align: left;
+  }
+
+  .footer-partner > a {
+    place-items: center start;
+  }
+
+  .footer-top > .footer-item:not(.footer-partner):nth-of-type(2) {
+    order: 2;
+  }
+
+  .footer-top > .footer-item:not(.footer-partner):nth-of-type(3) {
+    order: 3;
+  }
+
+  .footer-directions {
+    order: 4;
+  }
+
+  .footer-item {
+    gap: 8px;
+    padding: 20px 0;
+    border-top: 1px solid var(--border-color);
+    border-left: 0;
+  }
+
+  .footer-bottom {
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+  }
+
+  .footer-legal-links {
+    justify-content: center;
+  }
+
+  .realisation-project-layout {
+    justify-items: center;
+  }
+
+  .project-comparison,
+  .project-gallery {
+    width: min(100%, 720px);
+    max-width: 720px;
+    margin-inline: auto;
+  }
+
+  .gallery-pagination {
+    width: 100%;
+    margin-inline: auto;
+  }
+}
+
+@media (min-width: 561px) and (max-width: 820px) {
+  .trust-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .trust-item:nth-child(odd) {
+    border-left: 0;
+  }
+
+  .trust-item:nth-child(even) {
+    border-left: 1px solid var(--trust-separator);
+  }
+
+  .trust-item:nth-child(n + 3) {
+    margin-top: 12px;
+    padding-top: 16px;
+    border-top: 1px solid var(--trust-separator);
+  }
+}
+
+@media (min-width: 1121px) {
+  .location-column {
+    grid-template-rows: auto auto;
+    align-content: center;
+  }
+}
+
+@media (min-width: 1121px) and (max-width: 1366px) {
+  .about-copy-body {
+    grid-template-columns: minmax(150px, 180px) minmax(0, 1fr);
+    grid-template-areas:
+      "photo copy"
+      "reviews reviews";
+    align-items: center;
+  }
+
+  .about-photo {
+    grid-area: photo;
+  }
+
+  .about-copy-description {
+    display: contents;
+  }
+
+  .about-copy-text {
+    grid-area: copy;
+    align-self: center;
+  }
+
+  .google-reviews-link {
+    grid-area: reviews;
+    margin-top: 4px;
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) {
   html.theme-transitioning::view-transition-group(root) {
     animation-duration: 1500ms;
