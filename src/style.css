@@ -122,6 +122,26 @@ a {
   text-decoration: none;
 }
 
+.skip-link {
+  position: fixed;
+  z-index: 10001;
+  top: 10px;
+  left: 12px;
+  padding: 10px 14px;
+  border-radius: 4px;
+  color: #fff;
+  background: var(--brand-blue-deep);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 24%);
+  font-size: 12px;
+  font-weight: 700;
+  transform: translateY(calc(-100% - 18px));
+  transition: transform 180ms ease-out;
+}
+
+.skip-link:focus-visible {
+  transform: translateY(0);
+}
+
 .icon-library {
   position: absolute;
   width: 0;
@@ -2447,6 +2467,31 @@ html.theme-color-transition .realisations-hero::before {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+}
+
+.footer-credit {
+  color: var(--muted);
+  text-align: center;
+}
+
+.footer-credit-link {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: rgb(var(--brand-blue-rgb) / 36%);
+  text-underline-offset: 2px;
+  transition: color 180ms ease, text-decoration-color 180ms ease;
+}
+
+.footer-credit-link:hover,
+.footer-credit-link:focus-visible {
+  color: var(--brand-blue-on-surface);
+  text-decoration-color: currentColor;
+}
+
+.footer-credit-link:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: 2px;
 }
 
 .footer-legal-links button {

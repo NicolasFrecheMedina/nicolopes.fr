@@ -1,8 +1,9 @@
 <script setup>
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { businessInfo } from './config/business.js'
 import BeforeAfter from './components/BeforeAfter.vue'
 import { loadDeferredImage, observeDeferredImage, observeNearViewport } from './deferredMedia.js'
+import { updateRouteMetadata } from './seo.js'
 
 const menuOpen = ref(false)
 const theme = ref(localStorage.getItem('nico-lopes-theme') === 'dark' ? 'dark' : 'light')
@@ -33,6 +34,7 @@ let introFallbackTimeout = null
 const normalisePath = (path) => path.replace(/\/+$/, '') || '/'
 const currentPath = ref(normalisePath(window.location.pathname))
 const isRealisationsPage = computed(() => currentPath.value === '/realisations')
+watch(currentPath, updateRouteMetadata, { immediate: true })
 document.documentElement.dataset.theme = theme.value
 document.querySelector('meta[name="theme-color"]')?.setAttribute(
   'content',
@@ -866,6 +868,8 @@ function showNextGalleryMedia() {
     </div>
   </div>
 
+  <a class="skip-link" href="#main-content">Aller au contenu principal</a>
+
   <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
     <symbol id="icon-arrow" viewBox="0 0 24 24">
       <path d="M4 12h15m-6-6 6 6-6 6" />
@@ -1126,7 +1130,7 @@ function showNextGalleryMedia() {
         <p class="eyebrow">Nos réalisations</p>
         <h2 id="gallery-dialog-title">{{ activeGalleryProject.title }}</h2>
       </div>
-      <button autofocus class="gallery-lightbox-close" type="button" aria-label="Fermer la photo agrandie" @click="closeGallery">
+      <button autofocus class="gallery-lightbox-close" type="button" aria-label="Fermer la visionneuse" @click="closeGallery">
         <svg class="icon" aria-hidden="true"><use href="#icon-close" /></svg>
       </button>
     </div>
@@ -1173,7 +1177,7 @@ function showNextGalleryMedia() {
     </div>
   </dialog>
 
-  <main v-if="!isRealisationsPage">
+  <main v-if="!isRealisationsPage" id="main-content" tabindex="-1">
     <section id="accueil" class="hero">
       <div class="hero-shade"></div>
       <div class="hero-content">
@@ -1310,7 +1314,7 @@ function showNextGalleryMedia() {
               target="_blank"
               rel="noopener noreferrer"
               :title="`Note et nombre d’avis indiqués à titre informatif et non actualisés automatiquement.`"
-              :aria-label="`Consulter les avis Google de la Carrosserie Nico & Lopes : ${businessInfo.googleReviewRating} avis`"
+              :aria-label="`Consulter les avis Google de la Carrosserie Nico & Lopes : note ${businessInfo.googleReviewRating} sur 5`"
             >
               <svg class="google-review-logo" viewBox="0 0 24 24" aria-hidden="true">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.05 5.05 0 0 1-2.2 3.31v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.09Z" />
@@ -1405,7 +1409,7 @@ function showNextGalleryMedia() {
     </section>
   </main>
 
-  <main v-else class="realisations-page">
+  <main v-else id="main-content" class="realisations-page" tabindex="-1">
     <section class="realisations-hero">
       <div class="realisations-hero-media" aria-hidden="true">
         <video
@@ -1607,6 +1611,15 @@ function showNextGalleryMedia() {
 
       <div class="footer-bottom">
         <span>© 2026 Carrosserie Nico &amp; Lopes</span>
+        <span class="footer-credit">
+          Site conçu et développé par
+          <a
+            class="footer-credit-link"
+            href="https://nacodev.com"
+            target="_blank"
+            rel="noopener noreferrer"
+          >Nacodev</a>
+        </span>
         <nav class="footer-legal-links" aria-label="Informations légales">
           <button type="button" @click="openLegalDialog('legal', $event)">Mentions légales</button>
           <span aria-hidden="true">·</span>
