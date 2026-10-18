@@ -2366,8 +2366,8 @@ html.theme-color-transition .footer-bottom {
   }
 
   .trust-grid {
-    width: 68%;
-    margin: 0;
+    width: min(100%, 900px);
+    margin-inline: auto;
     column-gap: 8px;
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -2529,17 +2529,6 @@ html.theme-color-transition .footer-bottom {
 }
 
 @media (max-width: 1120px) {
-  .about-section {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-template-areas:
-      "about about"
-      "location free";
-  }
-
-  .about-copy-body {
-    grid-template-columns: minmax(180px, 0.6fr) minmax(0, 1fr);
-  }
-
   .realisation-project-layout {
     grid-template-columns: 1fr;
   }
@@ -3238,7 +3227,7 @@ html.theme-color-transition .footer-bottom {
   }
 }
 
-@media (min-width: 561px) and (max-width: 1060px) {
+@media (min-width: 561px) and (max-width: 1120px) {
   .about-section {
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
@@ -3294,11 +3283,6 @@ html.theme-color-transition .footer-bottom {
 
   .location-actions {
     justify-content: center;
-  }
-
-  .trust-grid {
-    width: min(100%, 900px);
-    margin-inline: auto;
   }
 
   .trust-item {
@@ -3375,7 +3359,9 @@ html.theme-color-transition .footer-bottom {
   .footer-legal-links {
     justify-content: center;
   }
+}
 
+@media (min-width: 561px) and (max-width: 1060px) {
   .realisation-project-layout {
     justify-items: center;
   }
