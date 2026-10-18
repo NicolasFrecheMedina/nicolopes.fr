@@ -979,10 +979,10 @@ function showNextGalleryMedia() {
         <a
           class="mobile-menu-action"
           :href="phoneHref"
-          aria-label="Appeler le 05 58 89 42 81"
+          :aria-label="`Appeler le ${businessInfo.phone}`"
         >
           <svg class="icon" aria-hidden="true"><use href="#icon-phone" /></svg>
-          <span>05 58 89 42 81</span>
+          <span>{{ businessInfo.phone }}</span>
         </a>
       </div>
       <a :href="isRealisationsPage ? '/#services' : '#services'" @click="openHomeSection($event, 'services')">Nos services</a>
@@ -1012,10 +1012,10 @@ function showNextGalleryMedia() {
       <a
         class="header-action header-action-phone"
         :href="phoneHref"
-        aria-label="Appeler le 05 58 89 42 81"
+        :aria-label="`Appeler le ${businessInfo.phone}`"
       >
         <svg class="icon" aria-hidden="true"><use href="#icon-phone" /></svg>
-        <span class="header-action-phone-label">05 58 89 42 81</span>
+        <span class="header-action-phone-label">{{ businessInfo.phone }}</span>
         <span class="action-tooltip" role="tooltip" aria-hidden="true">Nous appeler</span>
       </a>
     </div>
@@ -1369,9 +1369,9 @@ function showNextGalleryMedia() {
           <h3 id="location-title">Carrosserie Nico &amp; Lopes</h3>
           <address>83 Rue Friques O, 40260 Castets, Landes</address>
           <div class="location-actions">
-            <a class="location-action location-action-primary location-phone" href="tel:0558894281">
+            <a class="location-action location-action-primary location-phone" :href="phoneHref">
               <svg class="icon" aria-hidden="true"><use href="#icon-phone" /></svg>
-              05 58 89 42 81
+              {{ businessInfo.phone }}
             </a>
             <a
               class="location-action location-route"
