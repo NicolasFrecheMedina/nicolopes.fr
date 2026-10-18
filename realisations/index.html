@@ -17,7 +17,16 @@ Y88888o.       8        :88888.        ,8 8888       `8. ,8 8888       `8b      
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#f8f9fa" />
+    <meta name="theme-color" content="#11151a" />
+    <script>
+      (() => {
+        const savedTheme = localStorage.getItem('nico-lopes-theme')
+        const theme = savedTheme === 'light' ? 'light' : 'dark'
+        document.documentElement.dataset.theme = theme
+        document.querySelector('meta[name="theme-color"]').content =
+          theme === 'dark' ? '#11151a' : '#f8f9fa'
+      })()
+    </script>
     <meta name="author" content="Nacodev" />
     <meta name="description" content="Découvrez les réalisations avant/après de la Carrosserie Nico & Lopes à Castets, dans les Landes : réparations, peinture et rénovation automobile." />
     <meta property="og:locale" content="fr_FR" />

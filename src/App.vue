@@ -6,7 +6,7 @@ import { loadDeferredImage, observeDeferredImage, observeNearViewport } from './
 import { updateRouteMetadata } from './seo.js'
 
 const menuOpen = ref(false)
-const theme = ref(localStorage.getItem('nico-lopes-theme') === 'dark' ? 'dark' : 'light')
+const theme = ref(localStorage.getItem('nico-lopes-theme') === 'light' ? 'light' : 'dark')
 const themeTransitioning = ref(false)
 const sprayActive = ref(false)
 const contactDialog = ref(null)
