@@ -43,6 +43,121 @@ const directionsHref = 'https://www.google.com/maps/dir/?api=1&destination=43.87
 let sprayTimeout
 let lastContactTrigger = null
 let lastLegalTrigger = null
+let revealObserver = null
+let scrollAnimationFrame = null
+
+const revealTitleSelectors = [
+  '.services-section .section-heading',
+  '.work-section .section-heading',
+  '.about-copy > h2',
+  '.free-choice-column > h3',
+  '.trust-heading',
+  '.realisation-project-heading',
+]
+
+const revealGroups = [
+  { container: '.services-grid', items: ':scope > .service-card' },
+  { container: '.comparison-grid', items: ':scope > .comparison-card' },
+  { container: '.free-choice-list', items: ':scope > li' },
+  { container: '.trust-grid', items: ':scope > .trust-item' },
+  { container: '.realisations-gallery', items: ':scope > .gallery-thumbnail:not(.gallery-thumbnail-placeholder)' },
+]
+
+function prepareScrollReveals() {
+  document.documentElement.classList.remove('scroll-effects-ready')
+  revealObserver?.disconnect()
+  revealObserver = null
+}
+
+function setupScrollReveals() {
+  prepareScrollReveals()
+  if (reducedMotionQuery.matches || !('IntersectionObserver' in window)) return
+
+  try {
+    const targets = new Set()
+    document.querySelectorAll(revealTitleSelectors.join(',')).forEach((element) => {
+      element.classList.add('scroll-reveal', 'scroll-reveal-title')
+      element.style.setProperty('--reveal-delay', '0ms')
+      targets.add(element)
+    })
+
+    document.querySelectorAll('.about-copy-body').forEach((element) => {
+      element.classList.add('scroll-reveal', 'scroll-reveal-media')
+      element.style.setProperty('--reveal-delay', '120ms')
+      targets.add(element)
+    })
+
+    revealGroups.forEach(({ container, items }) => {
+      document.querySelectorAll(container).forEach((group) => {
+        group.querySelectorAll(items).forEach((element, index) => {
+          element.classList.add('scroll-reveal', 'scroll-reveal-item')
+          element.style.setProperty('--reveal-delay', `${120 + Math.min(index, 5) * 105}ms`)
+          targets.add(element)
+        })
+      })
+    })
+
+    document.querySelectorAll('.project-comparison').forEach((element) => {
+      element.classList.add('scroll-reveal', 'scroll-reveal-media')
+      element.style.setProperty('--reveal-delay', '120ms')
+      targets.add(element)
+    })
+
+    revealObserver = new IntersectionObserver((entries, observer) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return
+        entry.target.classList.add('is-revealed')
+        observer.unobserve(entry.target)
+      })
+    }, {
+      rootMargin: '0px 0px -8% 0px',
+      threshold: 0.12,
+    })
+
+    targets.forEach((element) => {
+      const bounds = element.getBoundingClientRect()
+      if (bounds.top < window.innerHeight * 0.92 && bounds.bottom > 0) {
+        element.classList.add('is-revealed')
+      } else {
+        revealObserver.observe(element)
+      }
+    })
+    document.documentElement.classList.add('scroll-effects-ready')
+  } catch {
+    prepareScrollReveals()
+  }
+}
+
+function updateScrollEffects() {
+  scrollAnimationFrame = null
+  const header = document.querySelector('.site-header')
+  header?.classList.toggle('is-scrolled', window.scrollY > 70)
+
+  const hero = document.querySelector('.hero')
+  const trustSection = document.querySelector('.trust-section')
+  if (reducedMotionQuery.matches || window.innerWidth <= 760) {
+    hero?.style.setProperty('--hero-parallax-y', '0px')
+    trustSection?.style.setProperty('--trust-parallax-y', '0px')
+    return
+  }
+
+  if (hero) {
+    const heroOffset = Math.min(22, Math.max(0, window.scrollY * 0.04))
+    hero.style.setProperty('--hero-parallax-y', `${heroOffset.toFixed(2)}px`)
+  }
+
+  if (trustSection) {
+    const bounds = trustSection.getBoundingClientRect()
+    const distanceFromCenter = window.innerHeight / 2 - (bounds.top + bounds.height / 2)
+    const trustOffset = Math.min(20, Math.max(-20, distanceFromCenter * 0.035))
+    trustSection.style.setProperty('--trust-parallax-y', `${trustOffset.toFixed(2)}px`)
+  }
+}
+
+function scheduleScrollEffects() {
+  if (scrollAnimationFrame !== null) return
+  scrollAnimationFrame = window.requestAnimationFrame(updateScrollEffects)
+}
 
 function openContactDialog(event) {
   menuOpen.value = false
@@ -127,14 +242,24 @@ function toggleTheme() {
 
 onBeforeUnmount(() => {
   window.clearTimeout(sprayTimeout)
+  prepareScrollReveals()
+  if (scrollAnimationFrame !== null) window.cancelAnimationFrame(scrollAnimationFrame)
+  window.removeEventListener('scroll', scheduleScrollEffects)
+  window.removeEventListener('resize', scheduleScrollEffects)
   window.removeEventListener('popstate', syncPathFromLocation)
   reducedMotionQuery.removeEventListener('change', handleReducedMotionChange)
   pauseRealisationsVideos()
 })
 
 onMounted(() => {
+  window.addEventListener('scroll', scheduleScrollEffects, { passive: true })
+  window.addEventListener('resize', scheduleScrollEffects)
   window.addEventListener('popstate', syncPathFromLocation)
   reducedMotionQuery.addEventListener('change', handleReducedMotionChange)
+  afterPageRender(() => {
+    setupScrollReveals()
+    scheduleScrollEffects()
+  })
   if (isRealisationsPage.value && !realisationsVideoPaused.value) {
     afterPageRender(playActiveRealisationsVideo)
   }
@@ -408,9 +533,12 @@ function handleReducedMotionChange(event) {
   realisationsVideoPaused.value = event.matches
   if (event.matches) {
     pauseRealisationsVideos()
+    revealObserver?.disconnect()
+    document.querySelectorAll('.scroll-reveal').forEach((element) => element.classList.add('is-revealed'))
   } else if (isRealisationsPage.value) {
     playActiveRealisationsVideo()
   }
+  scheduleScrollEffects()
 }
 
 function afterPageRender(callback) {
@@ -418,9 +546,11 @@ function afterPageRender(callback) {
 }
 
 function syncPathFromLocation() {
+  prepareScrollReveals()
   currentPath.value = normalisePath(window.location.pathname)
   menuOpen.value = false
   afterPageRender(() => {
+    setupScrollReveals()
     if (window.location.hash) {
       document.querySelector(window.location.hash)?.scrollIntoView()
     } else {
@@ -437,13 +567,16 @@ function syncPathFromLocation() {
 function openRealisationsPage(event) {
   event?.preventDefault()
   if (!isRealisationsPage.value) {
+    prepareScrollReveals()
     window.history.pushState({}, '', '/realisations')
     currentPath.value = '/realisations'
   }
   menuOpen.value = false
   window.scrollTo({ top: 0 })
   afterPageRender(() => {
+    setupScrollReveals()
     window.scrollTo({ top: 0 })
+    scheduleScrollEffects()
     playActiveRealisationsVideo()
   })
 }
@@ -453,9 +586,14 @@ function openHomeSection(event, sectionId = 'accueil') {
   if (!isRealisationsPage.value) return
   event.preventDefault()
   pauseRealisationsVideos()
+  prepareScrollReveals()
   window.history.pushState({}, '', `/#${sectionId}`)
   currentPath.value = '/'
-  afterPageRender(() => document.getElementById(sectionId)?.scrollIntoView())
+  afterPageRender(() => {
+    setupScrollReveals()
+    document.getElementById(sectionId)?.scrollIntoView()
+    scheduleScrollEffects()
+  })
 }
 
 function stopGalleryVideo() {
