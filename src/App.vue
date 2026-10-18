@@ -604,8 +604,18 @@ function showNextGalleryMedia() {
     </button>
 
     <nav id="main-navigation" class="main-nav" :class="{ 'is-open': menuOpen }" aria-label="Navigation principale">
+      <div class="mobile-menu-actions" role="group" aria-label="Actions rapides">
+        <a
+          class="mobile-menu-action"
+          :href="phoneHref"
+          aria-label="Appeler le 05 58 89 42 81"
+        >
+          <svg class="icon" aria-hidden="true"><use href="#icon-phone" /></svg>
+          <span>05 58 89 42 81</span>
+        </a>
+      </div>
       <a :href="isRealisationsPage ? '/#services' : '#services'" @click="openHomeSection($event, 'services')">Nos services</a>
-      <a href="/realisations" @click="openRealisationsPage">Réalisations</a>
+      <a :href="isRealisationsPage ? '/#realisations' : '#realisations'" @click="openHomeSection($event, 'realisations')">Réalisations</a>
       <a :href="isRealisationsPage ? '/#atelier' : '#atelier'" @click="openHomeSection($event, 'atelier')">La carrosserie</a>
       <a :href="isRealisationsPage ? '/#pourquoi-nous' : '#pourquoi-nous'" @click="openHomeSection($event, 'pourquoi-nous')">Pourquoi nous ?</a>
       <a href="#contact" aria-haspopup="dialog" @click.prevent="openContactDialog">Contact</a>
@@ -617,6 +627,7 @@ function showNextGalleryMedia() {
         class="header-action theme-toggle"
         :class="{ 'is-spraying': sprayActive }"
         type="button"
+        :aria-label="theme === 'dark' ? 'Passer au thème clair' : 'Passer au thème sombre'"
         :disabled="themeTransitioning"
         @click="toggleTheme"
       >
@@ -626,9 +637,6 @@ function showNextGalleryMedia() {
           alt=""
           aria-hidden="true"
         />
-        <span class="action-tooltip" role="tooltip" aria-hidden="true">
-          {{ theme === 'dark' ? 'Peindre en clair' : 'Peindre en sombre' }}
-        </span>
       </button>
       <a
         class="header-action header-action-phone"
@@ -854,7 +862,7 @@ function showNextGalleryMedia() {
           <p class="eyebrow">Le savoir-faire en images</p>
           <h2>Nos réalisations</h2>
         </div>
-        <a class="text-link" href="/realisations" @click="openRealisationsPage">
+        <a class="text-link home-realisations-link--desktop" href="/realisations" @click="openRealisationsPage">
           Voir nos réalisations
           <svg class="icon" aria-hidden="true"><use href="#icon-arrow" /></svg>
         </a>
@@ -873,6 +881,10 @@ function showNextGalleryMedia() {
           loading="lazy"
         />
       </div>
+      <a class="home-realisations-link--mobile" href="/realisations" @click="openRealisationsPage">
+        Voir nos réalisations
+        <svg class="icon" aria-hidden="true"><use href="#icon-arrow" /></svg>
+      </a>
     </section>
 
     <section id="atelier" class="section about-section" aria-labelledby="about-title">
@@ -890,19 +902,21 @@ function showNextGalleryMedia() {
             loading="lazy"
           />
           <div class="about-copy-description">
-            <p>
-              Située à Castets, la carrosserie Nico &amp; Lopes vous accompagne dans vos travaux de
-              carrosserie et peinture automobile, le remplacement de vitrages et la rénovation
-              d’optiques.
-            </p>
-            <p>Un savoir-faire au service de votre véhicule.</p>
+            <div class="about-copy-text">
+              <p>
+                Située à Castets, la carrosserie Nico &amp; Lopes vous accompagne dans vos travaux de
+                carrosserie et peinture automobile, le remplacement de vitrages et la rénovation
+                d’optiques.
+              </p>
+              <p>Un savoir-faire au service de votre véhicule.</p>
+            </div>
             <a
               class="google-reviews-link"
               :href="businessInfo.googleReviewsUrl"
               target="_blank"
               rel="noopener noreferrer"
               :title="`Note et nombre d’avis indiqués à titre informatif et non actualisés automatiquement.`"
-              :aria-label="`Consulter les avis Google de la Carrosserie Nico & Lopes : ${businessInfo.googleReviewRating}, ${businessInfo.googleReviewCount} avis`"
+              :aria-label="`Consulter les avis Google de la Carrosserie Nico & Lopes : ${businessInfo.googleReviewRating} avis`"
             >
               <svg class="google-review-logo" viewBox="0 0 24 24" aria-hidden="true">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.05 5.05 0 0 1-2.2 3.31v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.09Z" />
@@ -914,7 +928,7 @@ function showNextGalleryMedia() {
                 <span class="google-review-stars" aria-hidden="true">★★★★★</span>
                 <strong>{{ businessInfo.googleReviewRating }}</strong>
               </span>
-              <span class="google-review-count">{{ businessInfo.googleReviewCount }} avis Google</span>
+              <span class="google-review-count">Avis Google</span>
               <svg class="icon google-review-external" aria-hidden="true"><use href="#icon-external-link" /></svg>
             </a>
           </div>
@@ -1167,7 +1181,7 @@ function showNextGalleryMedia() {
           </a>
           <a class="footer-detail footer-email-address" :href="emailHref">{{ businessInfo.email }}</a>
         </section>
-        <section class="footer-item" aria-labelledby="footer-directions-title">
+        <section class="footer-item footer-directions" aria-labelledby="footer-directions-title">
           <h2 id="footer-directions-title">Itinéraire</h2>
           <a
             class="footer-contact-link"
