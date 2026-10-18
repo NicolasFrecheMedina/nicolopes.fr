@@ -2,6 +2,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { businessInfo } from './config/business.js'
 import BeforeAfter from './components/BeforeAfter.vue'
+import { loadDeferredImage, observeDeferredImage, observeNearViewport } from './deferredMedia.js'
 
 const menuOpen = ref(false)
 const theme = ref(localStorage.getItem('nico-lopes-theme') === 'dark' ? 'dark' : 'light')
@@ -34,17 +35,86 @@ document.querySelector('meta[name="theme-color"]')?.setAttribute(
 )
 const logoSource = computed(() => (
   theme.value === 'dark'
-    ? '/ressources/01-logo/Nico-Lopes-navbar.png'
-    : '/ressources/01-logo/Nico-Lopes-navbar-light.png'
+    ? '/ressources/01-logo/Nico-Lopes-navbar-144.webp'
+    : '/ressources/01-logo/Nico-Lopes-navbar-light-144.webp'
+))
+const logoSrcset = computed(() => (
+  theme.value === 'dark'
+    ? '/ressources/01-logo/Nico-Lopes-navbar-144.webp 144w, /ressources/01-logo/Nico-Lopes-navbar-366.webp 366w'
+    : '/ressources/01-logo/Nico-Lopes-navbar-light-144.webp 144w, /ressources/01-logo/Nico-Lopes-navbar-light-366.webp 366w'
+))
+const aboutPhotoName = computed(() => (theme.value === 'dark' ? 'c-v02' : 'c-v01'))
+const aboutPhotoSource = computed(() => `/ressources/04-atelier/${aboutPhotoName.value}-400.webp`)
+const aboutPhotoSrcset = computed(() => (
+  `/ressources/04-atelier/${aboutPhotoName.value}-400.webp 400w, /ressources/04-atelier/${aboutPhotoName.value}-800.webp 800w`
 ))
 const phoneHref = computed(() => `tel:${businessInfo.phone.replace(/\s/g, '')}`)
 const emailHref = computed(() => `mailto:${businessInfo.email}`)
 const directionsHref = 'https://www.google.com/maps/dir/?api=1&destination=43.8747615%2C-1.1543348'
+const transparentPixel = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=='
 let sprayTimeout
 let lastContactTrigger = null
 let lastLegalTrigger = null
 let revealObserver = null
 let scrollAnimationFrame = null
+const prefetchedAboutThemes = new Set()
+
+const vDeferredImage = {
+  mounted(element) {
+    element.__stopDeferredImage = observeDeferredImage(element)
+  },
+  updated(element, binding) {
+    if (binding.value === binding.oldValue || element.dataset.mediaLoaded !== 'true') return
+    element.dataset.mediaLoaded = 'false'
+    loadDeferredImage(element)
+  },
+  unmounted(element) {
+    element.__stopDeferredImage?.()
+  },
+}
+
+const vDeferredTrustBackground = {
+  mounted(element) {
+    element.__stopDeferredBackground = observeNearViewport(element, () => {
+      const image = new Image()
+      image.srcset = [
+        '/ressources/04-atelier/confiance-768.webp 768w',
+        '/ressources/04-atelier/confiance-1440.webp 1440w',
+        '/ressources/04-atelier/confiance-1920.webp 1920w',
+      ].join(', ')
+      image.sizes = '100vw'
+      image.addEventListener('load', () => {
+        element.style.setProperty('--trust-photo-image', `url("${image.currentSrc || image.src}")`)
+        element.classList.add('is-media-ready')
+      }, { once: true })
+      image.src = '/ressources/04-atelier/confiance-1440.webp'
+    })
+  },
+  unmounted(element) {
+    element.__stopDeferredBackground?.()
+  },
+}
+
+function prefetchAlternateAboutPhoto() {
+  const alternate = theme.value === 'dark' ? 'c-v01' : 'c-v02'
+  if (prefetchedAboutThemes.has(alternate)) return
+  prefetchedAboutThemes.add(alternate)
+  const preload = () => {
+    const image = new Image()
+    image.srcset = [
+      `/ressources/04-atelier/${alternate}-400.webp 400w`,
+      `/ressources/04-atelier/${alternate}-800.webp 800w`,
+    ].join(', ')
+    image.sizes = '220px'
+    image.src = `/ressources/04-atelier/${alternate}-400.webp`
+  }
+  if ('requestIdleCallback' in window) window.requestIdleCallback(preload, { timeout: 1200 })
+  else window.setTimeout(preload, 250)
+}
+
+function handleAboutPhotoLoad(event) {
+  if (event.currentTarget.dataset.mediaLoaded === 'true') prefetchAlternateAboutPhoto()
+}
 
 const revealTitleSelectors = [
   '.services-section .section-heading',
@@ -267,34 +337,34 @@ onMounted(() => {
 
 const services = [
   {
-    image: '/ressources/05-services-icons/carrosserie.png',
+    image: '/ressources/05-services-icons/carrosserie-192.webp',
     title: 'Carrosserie',
     description: 'La Carrosserie Nico & Lopes, située à Castets dans les Landes, vous accompagne pour la réparation automobile et la remise en état de votre carrosserie. Notre atelier intervient pour redonner à votre véhicule son aspect et ses finitions après un choc ou d’autres dommages de carrosserie.',
   },
   {
-    image: '/ressources/05-services-icons/peinture-automobile.png',
+    image: '/ressources/05-services-icons/peinture-automobile-192.webp',
     title: 'Peinture automobile',
     description: 'Notre atelier de carrosserie à Castets réalise vos travaux de peinture automobile pour retrouver une finition soignée et harmonieuse. Qu’il s’agisse d’une remise en peinture ou de travaux associés à une réparation de carrosserie, nous accordons une attention particulière à l’aspect final de votre véhicule.',
   },
   {
-    image: '/ressources/05-services-icons/remplacement-vitrages.png',
+    image: '/ressources/05-services-icons/remplacement-vitrages-192.webp',
     title: 'Remplacement de vitrages',
     description: 'La Carrosserie Nico & Lopes vous accompagne pour le remplacement de vos vitrages automobiles à Castets. Pare-brise et autres éléments vitrés de votre véhicule peuvent nécessiter une intervention adaptée pour retrouver une bonne visibilité et un vitrage en bon état.',
   },
   {
-    image: '/ressources/05-services-icons/renovation-optiques.png',
+    image: '/ressources/05-services-icons/renovation-optiques-192.webp',
     preserveColor: true,
     title: 'Rénovation d’optiques',
     description: 'Avec le temps, les optiques de phares peuvent devenir ternes ou perdre de leur transparence. Notre service de rénovation d’optiques automobiles à Castets vise à améliorer leur clarté et leur aspect, afin de redonner à vos phares une meilleure présentation.',
   },
   {
-    image: '/ressources/05-services-icons/vehicule-courtoisie.png',
+    image: '/ressources/05-services-icons/vehicule-courtoisie-192.webp',
     courtesy: true,
     title: 'Véhicule de courtoisie',
     description: 'Pour faciliter votre mobilité pendant l’immobilisation de votre voiture, la Carrosserie Nico & Lopes propose des véhicules de courtoisie, selon les disponibilités. Une solution pratique pour vous accompagner durant les travaux de carrosserie ou de peinture automobile.',
   },
   {
-    image: '/ressources/05-services-icons/toutes-assurances.png',
+    image: '/ressources/05-services-icons/toutes-assurances-192.webp',
     title: 'Prise en charge toutes assurances',
     description: 'La Carrosserie Nico & Lopes à Castets travaille avec les différentes compagnies d’assurance pour vous accompagner dans vos démarches après un sinistre automobile. Nous vous aidons à organiser la prise en charge des réparations de votre véhicule en lien avec votre assurance, selon les conditions de votre contrat.',
   },
@@ -306,7 +376,7 @@ const trustReasons = [
   { icon: 'icon-trust-clock', label: 'Des délais maîtrisés' },
   { icon: 'icon-trust-handshake', label: 'Accompagnement avec les assurances' },
   {
-    image: '/ressources/05-services-icons/vehicule-courtoisie.png',
+    image: '/ressources/05-services-icons/vehicule-courtoisie-96.webp',
     label: 'Véhicule de courtoisie',
   },
   { icon: 'icon-trust-shield', label: 'Garantie sur nos réparations' },
@@ -340,7 +410,7 @@ function showNextService() {
 
 const demonstrationsPath = '/ressources/02-demonstration/'
 const videosPath = '/ressources/03-video/'
-const realisationsVideoPoster = '/ressources/03-video/realisations-poster.jpg'
+const realisationsVideoPoster = '/ressources/03-video/realisations-poster-640.webp'
 const realisationsVideos = [
   '/ressources/03-video/WhatsApp Video 2026-10-08 at 07.47.39.mp4',
   '/ressources/03-video/WhatsApp Video 2026-10-08 at 07.47.40.mp4',
@@ -353,7 +423,7 @@ const realisationProjects = [
     images: ['V1-01.jpeg', 'V1-02.jpeg', 'V1-03.jpeg', 'V1-04.jpeg'],
     video: {
       src: `${videosPath}WhatsApp Video 2026-10-08 at 07.47.39.mp4`,
-      poster: `${videosPath}video-v1.jpg`,
+      poster: `${videosPath}video-v1-640.webp`,
     },
     comparison: {
       before: 'V1-01.jpeg',
@@ -385,7 +455,7 @@ const realisationProjects = [
     images: ['V3-01.jpeg', 'V3-02.jpeg', 'V3-03.jpeg'],
     video: {
       src: `${videosPath}WhatsApp Video 2026-10-08 at 07.47.41.mp4`,
-      poster: `${videosPath}video-v3.jpg`,
+      poster: `${videosPath}video-v3-640.webp`,
     },
   },
   {
@@ -394,7 +464,7 @@ const realisationProjects = [
     images: ['V4-00.jpeg', 'V4-01.jpeg', 'V4-02.jpeg', 'V4-03.jpeg', 'V4-04.jpeg', 'V4-05.jpeg'],
     video: {
       src: `${videosPath}WhatsApp Video 2026-10-08 at 07.47.40.mp4`,
-      poster: `${videosPath}video-v4.jpg`,
+      poster: `${videosPath}video-v4-640.webp`,
     },
     comparison: {
       before: 'V4-01.jpeg',
@@ -432,8 +502,32 @@ const activeGalleryMedia = computed(() => (
 ))
 const activeGalleryMediaCount = computed(() => projectMedia(activeGalleryProject.value).length)
 
-function imagePath(filename) {
-  return `${demonstrationsPath}${filename}`
+function imageStem(filename) {
+  return filename.replace(/\.[^.]+$/, '')
+}
+
+function imagePath(filename, variant = 'full') {
+  return `${demonstrationsPath}${imageStem(filename)}-${variant}.webp`
+}
+
+function comparisonSrcset(filename) {
+  const largeWidth = filename === 'V3-03.jpeg' ? 1200 : 1280
+  return [
+    `${imagePath(filename, '640')} 640w`,
+    `${imagePath(filename, '960')} 960w`,
+    `${imagePath(filename, 'large')} ${largeWidth}w`,
+  ].join(', ')
+}
+
+function thumbnailSrcset(filename) {
+  return [
+    `${imagePath(filename, 'thumb-320')} 320w`,
+    `${imagePath(filename, 'thumb-480')} 480w`,
+  ].join(', ')
+}
+
+function iconSrcset(source) {
+  return `${source.replace('-192.webp', '-96.webp')} 96w, ${source} 192w`
 }
 
 function projectMedia(project) {
@@ -442,6 +536,8 @@ function projectMedia(project) {
     mediaIndex: imageIndex,
     type: 'image',
     src: imagePath(filename),
+    thumbnail: imagePath(filename, 'thumb-320'),
+    thumbnailSrcset: thumbnailSrcset(filename),
     alt: `${project.title} — photo ${imageIndex + 1}`,
   }))
 
@@ -724,6 +820,8 @@ function showNextGalleryMedia() {
       <img
         class="brand-logo"
         :src="logoSource"
+        :srcset="logoSrcset"
+        sizes="(max-width: 760px) 52px, (max-width: 1060px) 58px, 72px"
         alt="Carrosserie Nico & Lopes"
         width="366"
         height="263"
@@ -771,7 +869,7 @@ function showNextGalleryMedia() {
       >
         <img
           class="theme-toggle-pictogram"
-          src="/ressources/05-services-icons/peinture-automobile.png"
+          src="/ressources/05-services-icons/peinture-automobile-96.webp"
           alt=""
           aria-hidden="true"
         />
@@ -854,6 +952,8 @@ function showNextGalleryMedia() {
             class="service-pictogram"
             :class="{ 'service-pictogram--original': activeService.preserveColor }"
             :src="activeService.image"
+            :srcset="iconSrcset(activeService.image)"
+            sizes="78px"
             alt=""
           />
         </span>
@@ -953,9 +1053,9 @@ function showNextGalleryMedia() {
         </div>
       </div>
       <div class="hero-points" aria-label="Nos services">
-        <span><i class="hero-point-pictogram-wrap" aria-hidden="true"><img src="/ressources/05-services-icons/carrosserie.png" alt="" /></i> Carrosserie &amp; peinture</span>
-        <span><i class="hero-point-pictogram-wrap" aria-hidden="true"><img src="/ressources/05-services-icons/remplacement-vitrages.png" alt="" /></i> Remplacement de vitrages</span>
-        <span><i class="hero-point-pictogram-wrap courtesy-marker" aria-hidden="true"><img src="/ressources/05-services-icons/vehicule-courtoisie.png" alt="" /></i> Véhicule de courtoisie</span>
+        <span><i class="hero-point-pictogram-wrap" aria-hidden="true"><img src="/ressources/05-services-icons/carrosserie-96.webp" alt="" /></i> Carrosserie &amp; peinture</span>
+        <span><i class="hero-point-pictogram-wrap" aria-hidden="true"><img src="/ressources/05-services-icons/remplacement-vitrages-96.webp" alt="" /></i> Remplacement de vitrages</span>
+        <span><i class="hero-point-pictogram-wrap courtesy-marker" aria-hidden="true"><img src="/ressources/05-services-icons/vehicule-courtoisie-96.webp" alt="" /></i> Véhicule de courtoisie</span>
         <span><svg class="icon" aria-hidden="true"><use href="#icon-insurance" /></svg> Toutes assurances</span>
       </div>
     </section>
@@ -986,6 +1086,8 @@ function showNextGalleryMedia() {
               class="service-pictogram"
               :class="{ 'service-pictogram--original': service.preserveColor }"
               :src="service.image"
+              :srcset="iconSrcset(service.image)"
+              sizes="92px"
               alt=""
             />
           </span>
@@ -1012,6 +1114,9 @@ function showNextGalleryMedia() {
           :project="`Projet ${project.id}`"
           :before="imagePath(project.comparison.before)"
           :after="imagePath(project.comparison.after)"
+          :before-srcset="comparisonSrcset(project.comparison.before)"
+          :after-srcset="comparisonSrcset(project.comparison.after)"
+          sizes="(max-width: 760px) 45vw, (max-width: 1060px) 44vw, 24vw"
           :after-label="project.comparison.afterLabel"
           :before-frame="project.comparison.homeFraming.before"
           :after-frame="project.comparison.homeFraming.after"
@@ -1031,13 +1136,17 @@ function showNextGalleryMedia() {
         <h2 id="about-title">La carrosserie Nico &amp; Lopes</h2>
         <div class="about-copy-body">
           <img
+            v-deferred-image="aboutPhotoName"
             class="about-photo"
             :class="{ 'about-photo--dark': theme === 'dark' }"
-            :src="theme === 'dark'
-              ? '/ressources/04-atelier/c-v02.jpg'
-              : '/ressources/04-atelier/c-v01.jpg'"
+            :src="transparentPixel"
+            :data-src="aboutPhotoSource"
+            :data-srcset="aboutPhotoSrcset"
+            data-sizes="220px"
             alt="La carrosserie Nico &amp; Lopes, sa façade et une voiture devant l’atelier"
             loading="lazy"
+            decoding="async"
+            @load="handleAboutPhotoLoad"
           />
           <div class="about-copy-description">
             <div class="about-copy-text">
@@ -1131,7 +1240,7 @@ function showNextGalleryMedia() {
       </div>
     </section>
 
-    <section id="pourquoi-nous" class="trust-section" aria-labelledby="trust-title">
+    <section id="pourquoi-nous" v-deferred-trust-background class="trust-section" aria-labelledby="trust-title">
       <div class="trust-section-inner">
         <header class="trust-heading">
           <h2 id="trust-title">Pourquoi nous faire confiance&nbsp;?</h2>
@@ -1139,7 +1248,7 @@ function showNextGalleryMedia() {
         <ul class="trust-grid">
           <li v-for="reason in trustReasons" :key="reason.label" class="trust-item">
             <span class="trust-icon-wrap" aria-hidden="true">
-              <img v-if="reason.image" :src="reason.image" alt="" />
+              <img v-if="reason.image" :src="reason.image" alt="" width="96" height="96" />
               <svg v-else><use :href="`#${reason.icon}`" /></svg>
             </span>
             <span>{{ reason.label }}</span>
@@ -1208,6 +1317,9 @@ function showNextGalleryMedia() {
           :project="project.title"
           :before="imagePath(project.comparison.before)"
           :after="imagePath(project.comparison.after)"
+          :before-srcset="comparisonSrcset(project.comparison.before)"
+          :after-srcset="comparisonSrcset(project.comparison.after)"
+          sizes="(max-width: 1120px) calc(100vw - 44px), 46vw"
           :after-label="project.comparison.afterLabel"
           :show-caption="false"
           loading="lazy"
@@ -1225,7 +1337,11 @@ function showNextGalleryMedia() {
                 @click="openGallery(projectIndex, media.mediaIndex, $event)"
               >
                 <img
-                  :src="media.type === 'video' ? media.poster : media.src"
+                  v-deferred-image="media.id"
+                  :src="transparentPixel"
+                  :data-src="media.type === 'video' ? media.poster : media.thumbnail"
+                  :data-srcset="media.type === 'video' ? undefined : media.thumbnailSrcset"
+                  data-sizes="(max-width: 760px) 46vw, (max-width: 1120px) 23vw, 12vw"
                   :alt="media.alt"
                   loading="lazy"
                   decoding="async"
@@ -1279,6 +1395,8 @@ function showNextGalleryMedia() {
         >
           <img
             :src="logoSource"
+            :srcset="logoSrcset"
+            sizes="172px"
             alt="Carrosserie Nico & Lopes"
             width="366"
             height="263"
@@ -1293,8 +1411,13 @@ function showNextGalleryMedia() {
             aria-label="Motrio, partenaire de la Carrosserie Nico & Lopes — ouvre dans un nouvel onglet"
           >
             <img
-              src="/ressources/04-atelier/Motrio_Logo_Commercial.jpg"
+              v-deferred-image="'motrio'"
+              :src="transparentPixel"
+              data-src="/ressources/04-atelier/motrio-264.webp"
+              data-sizes="132px"
               alt="Motrio"
+              loading="lazy"
+              decoding="async"
             />
           </a>
         </section>

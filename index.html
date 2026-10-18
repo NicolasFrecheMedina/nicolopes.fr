@@ -6,6 +6,18 @@
     <meta name="theme-color" content="#f8f9fa" />
     <meta name="description" content="Carrosserie Nico & Lopes à Castets : carrosserie, peinture automobile, remplacement de vitrages et rénovation d’optiques." />
     <link rel="icon" type="image/png" sizes="64x64" href="/favicon.png" />
+    <script>
+      if (!location.pathname.replace(/\/+$/, '').endsWith('/realisations')) {
+        const width = innerWidth <= 760 ? 768 : innerWidth <= 1280 ? 1280 : 1600
+        const preload = document.createElement('link')
+        preload.rel = 'preload'
+        preload.as = 'image'
+        preload.type = 'image/webp'
+        preload.href = `/ressources/04-atelier/photo-garage-${width}.webp`
+        preload.fetchPriority = 'high'
+        document.head.append(preload)
+      }
+    </script>
     <title>Nico &amp; Lopes - Carrosserie à Castets</title>
   </head>
   <body>

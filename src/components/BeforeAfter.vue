@@ -1,10 +1,14 @@
 <script setup>
-import { ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { loadDeferredImage, observeNearViewport } from '../deferredMedia.js'
 
 const props = defineProps({
   project: { type: String, required: true },
   before: { type: String, required: true },
   after: { type: String, required: true },
+  beforeSrcset: { type: String, default: '' },
+  afterSrcset: { type: String, default: '' },
+  sizes: { type: String, default: '100vw' },
   afterLabel: { type: String, default: 'APRÈS' },
   loading: { type: String, default: 'lazy' },
   beforeFrame: { type: Object, default: () => ({}) },
@@ -14,6 +18,18 @@ const props = defineProps({
 
 const position = ref(50)
 const dragging = ref(false)
+const comparison = ref(null)
+const transparentPixel = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=='
+let stopDeferredObservation = () => {}
+
+onMounted(() => {
+  if (props.loading === 'eager') return
+  stopDeferredObservation = observeNearViewport(comparison.value, () => {
+    comparison.value?.querySelectorAll('img[data-src]').forEach(loadDeferredImage)
+  })
+})
+
+onBeforeUnmount(() => stopDeferredObservation())
 
 function imageStyle(frame) {
   const numberOr = (value, fallback) => (Number.isFinite(Number(value)) ? Number(value) : fallback)
@@ -75,6 +91,7 @@ function moveWithKeyboard(event) {
 <template>
   <figure class="comparison-card">
     <div
+      ref="comparison"
       class="before-after"
       :class="{ 'is-dragging': dragging }"
       role="slider"
@@ -92,7 +109,12 @@ function moveWithKeyboard(event) {
     >
       <img
         class="before-after-image"
-        :src="after"
+        :src="loading === 'eager' ? after : transparentPixel"
+        :srcset="loading === 'eager' ? afterSrcset : undefined"
+        :sizes="sizes"
+        :data-src="loading === 'eager' ? undefined : after"
+        :data-srcset="loading === 'eager' ? undefined : afterSrcset"
+        :data-sizes="loading === 'eager' ? undefined : sizes"
         :alt="`${project} — ${afterLabel.toLowerCase()}`"
         :loading="loading"
         :style="imageStyle(afterFrame)"
@@ -106,7 +128,12 @@ function moveWithKeyboard(event) {
       >
         <img
           class="before-after-image"
-          :src="before"
+          :src="loading === 'eager' ? before : transparentPixel"
+          :srcset="loading === 'eager' ? beforeSrcset : undefined"
+          :sizes="sizes"
+          :data-src="loading === 'eager' ? undefined : before"
+          :data-srcset="loading === 'eager' ? undefined : beforeSrcset"
+          :data-sizes="loading === 'eager' ? undefined : sizes"
           alt=""
           :loading="loading"
           :style="imageStyle(beforeFrame)"

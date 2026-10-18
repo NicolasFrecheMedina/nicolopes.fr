@@ -573,7 +573,7 @@ html.theme-color-transition .footer-bottom {
   flex-direction: column;
   justify-content: space-between;
   color: #fff;
-  background: var(--ink) url('/ressources/04-atelier/photo%20garage.jpeg') center calc(78% + 20px + var(--hero-parallax-y)) / cover no-repeat;
+  background: var(--ink) url('/ressources/04-atelier/photo-garage-1280.webp') center calc(78% + 20px + var(--hero-parallax-y)) / cover no-repeat;
 }
 
 .hero::before {
@@ -1328,7 +1328,7 @@ html.theme-color-transition .hero::before {
   overflow: hidden;
   padding: clamp(52px, 6vw, 78px) clamp(22px, 5vw, 72px);
   color: #fff;
-  background: var(--ink) url('/ressources/03-video/realisations-poster.jpg') center / cover no-repeat;
+  background: var(--ink) url('/ressources/03-video/realisations-poster-640.webp') center / cover no-repeat;
   isolation: isolate;
 }
 
@@ -2054,6 +2054,7 @@ html.theme-color-transition .hero::before {
 
 .trust-section {
   --trust-parallax-y: 0px;
+  --trust-photo-image: none;
   overflow: hidden;
   display: flex;
   min-height: 360px;
@@ -2063,7 +2064,7 @@ html.theme-color-transition .hero::before {
   background-image:
     var(--trust-photo-overlay),
     var(--trust-photo-wash),
-    url('/ressources/04-atelier/pexels-gustavo-fring-6870314.jpg');
+    var(--trust-photo-image);
   background-color: var(--trust-bg);
   background-position: center, center, center calc(42% + var(--trust-parallax-y));
   background-size: cover;
@@ -2459,6 +2460,12 @@ html.scroll-effects-ready .trust-heading.scroll-reveal-title.is-revealed h2::aft
   transform: scaleX(1);
 }
 
+@media (min-width: 1281px) {
+  .hero {
+    background-image: url('/ressources/04-atelier/photo-garage-1600.webp');
+  }
+}
+
 @media (max-width: 1120px) {
   .main-nav {
     gap: 10px;
@@ -2755,6 +2762,7 @@ html.scroll-effects-ready .trust-heading.scroll-reveal-title.is-revealed h2::aft
   .hero {
     height: auto;
     min-height: 560px;
+    background-image: url('/ressources/04-atelier/photo-garage-768.webp');
     background-position: 59% calc(50% + var(--hero-parallax-y));
     background-size: cover;
   }
