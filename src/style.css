@@ -650,6 +650,8 @@ html.theme-color-transition .work-section,
 html.theme-color-transition .realisation-project,
 html.theme-color-transition .gallery-lightbox,
 html.theme-color-transition .about-section,
+html.theme-color-transition .customer-reviews-section,
+html.theme-color-transition .customer-review-card,
 html.theme-color-transition .free-choice-list > li,
 html.theme-color-transition .location-details,
 html.theme-color-transition .atelier-map,
@@ -943,7 +945,8 @@ html.theme-color-transition .realisations-hero::before {
 }
 
 .section-heading h2,
-.about-copy h2 {
+.about-copy h2,
+.customer-reviews-heading h2 {
   margin: 0;
   font-family: var(--display);
   font-size: clamp(32px, 4vw, 43px);
@@ -987,7 +990,8 @@ html.theme-color-transition .realisations-hero::before {
 .services-section .section-heading,
 .work-section .section-heading,
 .realisation-project-heading,
-.about-copy > h2 {
+.about-copy > h2,
+.customer-reviews-heading {
   position: relative;
   padding-bottom: 10px;
 }
@@ -995,7 +999,8 @@ html.theme-color-transition .realisations-hero::before {
 .services-section .section-heading::after,
 .work-section .section-heading::after,
 .realisation-project-heading::after,
-.about-copy > h2::after {
+.about-copy > h2::after,
+.customer-reviews-heading::after {
   position: absolute;
   bottom: 0;
   left: 0;
@@ -2193,6 +2198,149 @@ html.theme-color-transition .realisations-hero::before {
   background: var(--brand-blue-deep);
 }
 
+.customer-reviews-section {
+  padding-top: 38px;
+  padding-bottom: 42px;
+  border-top: 1px solid var(--border-subtle);
+  color: var(--page-text);
+  background: var(--surface);
+}
+
+.customer-reviews-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 20px;
+}
+
+.customer-reviews-heading h2 {
+  font-size: clamp(28px, 3vw, 38px);
+}
+
+.customer-reviews-actions,
+.customer-reviews-actions > a,
+.customer-reviews-arrows {
+  display: flex;
+  align-items: center;
+}
+
+.customer-reviews-actions {
+  gap: 16px;
+}
+
+.customer-reviews-actions > a {
+  gap: 7px;
+  color: var(--brand-blue-on-surface);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.035em;
+  text-transform: uppercase;
+}
+
+.customer-reviews-actions > a:hover,
+.customer-reviews-actions > a:focus-visible {
+  color: var(--brand-blue-highlight);
+}
+
+.customer-reviews-actions > a .icon {
+  width: 13px;
+  height: 13px;
+}
+
+.customer-reviews-arrows {
+  gap: 6px;
+}
+
+.customer-reviews-arrows button {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border: 1px solid var(--border-color);
+  border-radius: 50%;
+  color: var(--brand-blue-on-surface);
+  background: var(--surface-alt);
+  cursor: pointer;
+  transition: color 160ms ease, border-color 160ms ease, background-color 160ms ease;
+}
+
+.customer-reviews-arrows button:first-child .icon {
+  transform: rotate(180deg);
+}
+
+.customer-reviews-arrows button:hover,
+.customer-reviews-arrows button:focus-visible {
+  border-color: var(--brand-blue);
+  color: #fff;
+  background: var(--brand-blue);
+}
+
+.customer-reviews-arrows button:focus-visible,
+.customer-reviews-track:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+
+.customer-reviews-arrows .icon {
+  width: 15px;
+  height: 15px;
+}
+
+.customer-reviews-track {
+  display: grid;
+  grid-auto-columns: calc((100% - 42px) / 4);
+  grid-auto-flow: column;
+  gap: 14px;
+  overflow-x: auto;
+  padding: 2px 2px 8px;
+  scroll-behavior: smooth;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  overscroll-behavior-inline: contain;
+}
+
+.customer-reviews-track::-webkit-scrollbar {
+  display: none;
+}
+
+.customer-review-card {
+  display: flex;
+  min-height: 132px;
+  flex-direction: column;
+  padding: 17px 18px 16px;
+  border: 1px solid var(--card-border);
+  border-radius: 9px;
+  color: var(--page-text);
+  background: var(--card-bg);
+  box-shadow: 0 6px 18px rgb(20 24 28 / 7%);
+  scroll-snap-align: start;
+}
+
+.customer-review-stars {
+  color: #e0a52e;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  line-height: 1;
+}
+
+.customer-review-card q {
+  margin: 10px 0 8px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.customer-review-card cite {
+  margin-top: 2px;
+  color: var(--brand-blue-on-surface);
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0.035em;
+  text-transform: uppercase;
+}
+
 .trust-section {
   --trust-parallax-y: 0px;
   --trust-photo-image: none;
@@ -2612,6 +2760,7 @@ html.scroll-effects-ready .services-section .scroll-reveal-title::after,
 html.scroll-effects-ready .work-section .scroll-reveal-title::after,
 html.scroll-effects-ready .realisation-project-heading.scroll-reveal-title::after,
 html.scroll-effects-ready .about-copy > .scroll-reveal-title::after,
+html.scroll-effects-ready .customer-reviews-heading.scroll-reveal-title::after,
 html.scroll-effects-ready .trust-heading.scroll-reveal-title h2::after {
   transform: scaleX(0);
   transform-origin: left center;
@@ -2622,6 +2771,7 @@ html.scroll-effects-ready .services-section .scroll-reveal-title.is-revealed::af
 html.scroll-effects-ready .work-section .scroll-reveal-title.is-revealed::after,
 html.scroll-effects-ready .realisation-project-heading.scroll-reveal-title.is-revealed::after,
 html.scroll-effects-ready .about-copy > .scroll-reveal-title.is-revealed::after,
+html.scroll-effects-ready .customer-reviews-heading.scroll-reveal-title.is-revealed::after,
 html.scroll-effects-ready .trust-heading.scroll-reveal-title.is-revealed h2::after {
   transform: scaleX(1);
 }
@@ -2845,6 +2995,10 @@ html.scroll-effects-ready .trust-heading.scroll-reveal-title.is-revealed h2::aft
 }
 
 @media (max-width: 1120px) {
+  .customer-reviews-track {
+    grid-auto-columns: calc((100% - 14px) / 2);
+  }
+
   .realisation-project-layout {
     grid-template-columns: 1fr;
   }
@@ -2916,6 +3070,34 @@ html.scroll-effects-ready .trust-heading.scroll-reveal-title.is-revealed h2::aft
 
   #app {
     padding-top: 60px;
+  }
+
+  .customer-reviews-section {
+    padding-top: 31px;
+    padding-bottom: 35px;
+  }
+
+  .customer-reviews-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .customer-reviews-heading h2 {
+    font-size: clamp(27px, 8vw, 34px);
+  }
+
+  .customer-reviews-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .customer-reviews-track {
+    grid-auto-columns: 100%;
+  }
+
+  .customer-review-card {
+    min-height: 132px;
   }
 
   .site-header {
@@ -3776,6 +3958,7 @@ html.scroll-effects-ready .trust-heading.scroll-reveal-title.is-revealed h2::aft
   html.scroll-effects-ready .work-section .scroll-reveal-title::after,
   html.scroll-effects-ready .realisation-project-heading.scroll-reveal-title::after,
   html.scroll-effects-ready .about-copy > .scroll-reveal-title::after,
+  html.scroll-effects-ready .customer-reviews-heading.scroll-reveal-title::after,
   html.scroll-effects-ready .trust-heading.scroll-reveal-title h2::after {
     transform: scaleX(1);
   }

@@ -17,6 +17,7 @@ const galleryDialog = ref(null)
 const galleryVideo = ref(null)
 const galleryVideoPlaying = ref(false)
 const realisationsVideoRefs = ref([])
+const customerReviewsTrack = ref(null)
 const activeServiceIndex = ref(0)
 const activeGalleryProjectIndex = ref(0)
 const activeGalleryMediaIndex = ref(0)
@@ -64,7 +65,114 @@ let lastContactTrigger = null
 let lastLegalTrigger = null
 let revealObserver = null
 let scrollAnimationFrame = null
+let customerReviewSettleTimeout = null
+let customerReviewResizeFrame = null
+let customerReviewCurrentIndex = 0
 const prefetchedAboutThemes = new Set()
+const customerReviewLoopBuffer = Math.min(4, businessInfo.alloGarageReviews.length)
+const loopedCustomerReviews = [
+  ...businessInfo.alloGarageReviews.slice(-customerReviewLoopBuffer).map((review, index) => ({
+    review,
+    originalIndex: businessInfo.alloGarageReviews.length - customerReviewLoopBuffer + index,
+    clone: true,
+    key: `before-${index}`,
+  })),
+  ...businessInfo.alloGarageReviews.map((review, index) => ({
+    review,
+    originalIndex: index,
+    clone: false,
+    key: `review-${index}`,
+  })),
+  ...businessInfo.alloGarageReviews.slice(0, customerReviewLoopBuffer).map((review, index) => ({
+    review,
+    originalIndex: index,
+    clone: true,
+    key: `after-${index}`,
+  })),
+]
+
+function getCustomerReviewTrackState() {
+  const track = customerReviewsTrack.value
+  if (!track) return null
+
+  const cards = [...track.querySelectorAll('.customer-review-card')]
+  if (!cards.length) return null
+
+  const firstOffset = cards[0].offsetLeft
+  const positions = cards.map((card) => card.offsetLeft - firstOffset)
+  const domIndex = positions.reduce((closestIndex, position, index) => (
+    Math.abs(position - track.scrollLeft) < Math.abs(positions[closestIndex] - track.scrollLeft)
+      ? index
+      : closestIndex
+  ), 0)
+
+  return { track, cards, positions, domIndex }
+}
+
+function moveCustomerReviewsTo(domIndex, smooth = false) {
+  const state = getCustomerReviewTrackState()
+  if (!state) return
+
+  const { track, cards, positions } = state
+  const targetIndex = Math.min(cards.length - 1, Math.max(0, domIndex))
+  const target = positions[targetIndex]
+  customerReviewCurrentIndex = Number(cards[targetIndex].dataset.reviewIndex)
+
+  if (smooth && !reducedMotionQuery.matches) {
+    track.scrollTo({ left: target, behavior: 'smooth' })
+    return
+  }
+
+  const previousScrollBehavior = track.style.scrollBehavior
+  track.style.scrollBehavior = 'auto'
+  track.scrollLeft = target
+  window.requestAnimationFrame(() => {
+    if (previousScrollBehavior) track.style.scrollBehavior = previousScrollBehavior
+    else track.style.removeProperty('scroll-behavior')
+  })
+}
+
+function normaliseCustomerReviewLoop() {
+  const state = getCustomerReviewTrackState()
+  if (!state || businessInfo.alloGarageReviews.length <= 1) return
+
+  const reviewCount = businessInfo.alloGarageReviews.length
+  const { cards, domIndex } = state
+  customerReviewCurrentIndex = Number(cards[domIndex].dataset.reviewIndex)
+
+  if (domIndex < customerReviewLoopBuffer) {
+    moveCustomerReviewsTo(domIndex + reviewCount)
+  } else if (domIndex >= customerReviewLoopBuffer + reviewCount) {
+    moveCustomerReviewsTo(domIndex - reviewCount)
+  }
+}
+
+function scheduleCustomerReviewLoopNormalisation() {
+  window.clearTimeout(customerReviewSettleTimeout)
+  customerReviewSettleTimeout = window.setTimeout(
+    normaliseCustomerReviewLoop,
+    reducedMotionQuery.matches ? 0 : 120,
+  )
+}
+
+function initialiseCustomerReviewLoop() {
+  customerReviewCurrentIndex = 0
+  moveCustomerReviewsTo(customerReviewLoopBuffer)
+}
+
+function handleCustomerReviewResize() {
+  if (customerReviewResizeFrame !== null) window.cancelAnimationFrame(customerReviewResizeFrame)
+  customerReviewResizeFrame = window.requestAnimationFrame(() => {
+    customerReviewResizeFrame = null
+    moveCustomerReviewsTo(customerReviewLoopBuffer + customerReviewCurrentIndex)
+  })
+}
+
+function scrollCustomerReviews(direction) {
+  const state = getCustomerReviewTrackState()
+  if (!state || businessInfo.alloGarageReviews.length <= 1) return
+  moveCustomerReviewsTo(state.domIndex + direction, true)
+}
 
 const vDeferredImage = {
   mounted(element) {
@@ -128,6 +236,7 @@ const revealTitleSelectors = [
   '.work-section .section-heading',
   '.about-copy > h2',
   '.free-choice-column > h3',
+  '.customer-reviews-heading',
   '.trust-heading',
   '.realisation-project-heading',
 ]
@@ -136,6 +245,7 @@ const revealGroups = [
   { container: '.services-grid', items: ':scope > .service-card' },
   { container: '.comparison-grid', items: ':scope > .comparison-card' },
   { container: '.free-choice-list', items: ':scope > li' },
+  { container: '.customer-reviews-track', items: ':scope > .customer-review-card' },
   { container: '.trust-grid', items: ':scope > .trust-item' },
   { container: '.realisations-gallery', items: ':scope > .gallery-thumbnail:not(.gallery-thumbnail-placeholder)' },
 ]
@@ -360,11 +470,14 @@ function handleIntroTransitionEnd(event) {
 onBeforeUnmount(() => {
   window.clearTimeout(sprayTimeout)
   window.clearTimeout(heroVideoReleaseTimeout)
+  window.clearTimeout(customerReviewSettleTimeout)
   clearIntroSchedule()
   prepareScrollReveals()
   if (scrollAnimationFrame !== null) window.cancelAnimationFrame(scrollAnimationFrame)
   window.removeEventListener('scroll', scheduleScrollEffects)
   window.removeEventListener('resize', scheduleScrollEffects)
+  window.removeEventListener('resize', handleCustomerReviewResize)
+  if (customerReviewResizeFrame !== null) window.cancelAnimationFrame(customerReviewResizeFrame)
   window.removeEventListener('popstate', syncPathFromLocation)
   reducedMotionQuery.removeEventListener('change', handleReducedMotionChange)
   pauseRealisationsVideos()
@@ -373,11 +486,13 @@ onBeforeUnmount(() => {
 onMounted(() => {
   window.addEventListener('scroll', scheduleScrollEffects, { passive: true })
   window.addEventListener('resize', scheduleScrollEffects)
+  window.addEventListener('resize', handleCustomerReviewResize)
   window.addEventListener('popstate', syncPathFromLocation)
   reducedMotionQuery.addEventListener('change', handleReducedMotionChange)
   afterPageRender(() => {
     setupScrollReveals()
     scheduleScrollEffects()
+    initialiseCustomerReviewLoop()
   })
   if (isRealisationsPage.value && !realisationsVideoPaused.value) {
     afterPageRender(playActiveRealisationsVideo)
@@ -482,11 +597,11 @@ const realisationProjects = [
       poster: `${videosPath}video-v1-640.webp`,
     },
     comparison: {
-      before: 'V1-01.jpeg',
+      before: 'V1-03.jpeg',
       after: 'V1-02.jpeg',
-      afterLabel: 'PENDANT',
+      afterLabel: 'APRÈS',
       homeFraming: {
-        before: { scale: 1.14, positionX: 42, positionY: 58 },
+        before: { scale: 1, positionX: 50, positionY: 50 },
         after: { scale: 1, positionX: 50, positionY: 50 },
       },
     },
@@ -745,6 +860,7 @@ function syncPathFromLocation() {
       playActiveRealisationsVideo()
     } else {
       pauseRealisationsVideos()
+      initialiseCustomerReviewLoop()
     }
   })
 }
@@ -776,6 +892,7 @@ function openHomeSection(event, sectionId = 'accueil') {
   currentPath.value = '/'
   afterPageRender(() => {
     setupScrollReveals()
+    initialiseCustomerReviewLoop()
     document.getElementById(sectionId)?.scrollIntoView()
     scheduleScrollEffects()
   })
@@ -1313,7 +1430,7 @@ function showNextGalleryMedia() {
               :href="businessInfo.googleReviewsUrl"
               target="_blank"
               rel="noopener noreferrer"
-              :title="`Note et nombre d’avis indiqués à titre informatif et non actualisés automatiquement.`"
+              :title="`Note indiquée à titre informatif et non actualisée automatiquement.`"
               :aria-label="`Consulter les avis Google de la Carrosserie Nico & Lopes : note ${businessInfo.googleReviewRating} sur 5`"
             >
               <svg class="google-review-logo" viewBox="0 0 24 24" aria-hidden="true">
@@ -1371,7 +1488,7 @@ function showNextGalleryMedia() {
         ></iframe>
         <div class="location-details">
           <h3 id="location-title">Carrosserie Nico &amp; Lopes</h3>
-          <address>83 Rue Friques O, 40260 Castets, Landes</address>
+          <address>{{ businessInfo.address }}, Landes</address>
           <div class="location-actions">
             <a class="location-action location-action-primary location-phone" :href="phoneHref">
               <svg class="icon" aria-hidden="true"><use href="#icon-phone" /></svg>
@@ -1388,6 +1505,62 @@ function showNextGalleryMedia() {
             </a>
           </div>
         </div>
+      </div>
+    </section>
+
+    <section class="section customer-reviews-section" aria-labelledby="customer-reviews-title">
+      <div class="customer-reviews-heading">
+        <div>
+          <p class="eyebrow">Vos retours</p>
+          <h2 id="customer-reviews-title">Les avis de nos clients</h2>
+        </div>
+        <div class="customer-reviews-actions">
+          <a :href="businessInfo.alloGarageReviewsUrl" target="_blank" rel="noopener noreferrer">
+            Avis vérifiés sur AlloGarage
+            <svg class="icon" aria-hidden="true"><use href="#icon-external-link" /></svg>
+          </a>
+          <div class="customer-reviews-arrows" aria-label="Navigation des avis">
+            <button
+              type="button"
+              aria-label="Afficher l’avis précédent"
+              @click="scrollCustomerReviews(-1)"
+            >
+              <svg class="icon" aria-hidden="true"><use href="#icon-arrow" /></svg>
+            </button>
+            <button
+              type="button"
+              aria-label="Afficher l’avis suivant"
+              @click="scrollCustomerReviews(1)"
+            >
+              <svg class="icon" aria-hidden="true"><use href="#icon-arrow" /></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div
+        ref="customerReviewsTrack"
+        class="customer-reviews-track"
+        tabindex="0"
+        aria-label="Avis clients vérifiés sur AlloGarage"
+        @scroll.passive="scheduleCustomerReviewLoopNormalisation"
+        @scrollend="normaliseCustomerReviewLoop"
+        @keydown.left.prevent="scrollCustomerReviews(-1)"
+        @keydown.right.prevent="scrollCustomerReviews(1)"
+      >
+        <article
+          v-for="item in loopedCustomerReviews"
+          :key="item.key"
+          class="customer-review-card"
+          :data-review-index="item.originalIndex"
+          :data-review-clone="item.clone ? 'true' : 'false'"
+          :aria-hidden="item.clone ? 'true' : undefined"
+        >
+          <div class="customer-review-stars" :aria-label="`${item.review.rating} étoiles sur 5`">
+            {{ '★'.repeat(item.review.rating) }}
+          </div>
+          <q>{{ item.review.quote }}</q>
+          <cite>Publié le {{ item.review.publishedAt }}</cite>
+        </article>
       </div>
     </section>
 
@@ -1557,7 +1730,7 @@ function showNextGalleryMedia() {
         <section class="footer-item footer-partner" aria-labelledby="footer-partner-title">
           <h2 id="footer-partner-title">Partenaire</h2>
           <a
-            href="https://www.motrio.fr/garage-reparateur/carrosserie-nicolopes-10278"
+            :href="businessInfo.motrioReviewsUrl"
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Motrio, partenaire de la Carrosserie Nico & Lopes — ouvre dans un nouvel onglet"
@@ -1651,16 +1824,16 @@ function showNextGalleryMedia() {
       <section>
         <h3>Éditeur du site</h3>
         <p>Nom commercial : Carrosserie Nico &amp; Lopes.</p>
-        <p>Raison sociale : [RAISON SOCIALE À RENSEIGNER].</p>
-        <p>Forme juridique : [FORME JURIDIQUE À RENSEIGNER].</p>
+        <p>Raison sociale : {{ businessInfo.legalName }}.</p>
+        <p>Forme juridique : {{ businessInfo.legalForm }} au capital social de {{ businessInfo.shareCapital }}.</p>
         <p>Adresse de l’établissement : {{ businessInfo.address }}.</p>
-        <p>Adresse du siège social : [ADRESSE DU SIÈGE SOCIAL À RENSEIGNER].</p>
+        <p>Siège social : {{ businessInfo.address }}.</p>
+        <p>Dirigeants communiqués : {{ businessInfo.leaders.join(' et ') }}.</p>
       </section>
       <section>
         <h3>Immatriculation</h3>
-        <p>SIREN : [SIREN À RENSEIGNER].</p>
-        <p>SIRET : [SIRET À RENSEIGNER].</p>
-        <p>Immatriculation au RCS ou au répertoire des métiers, le cas échéant : [IMMATRICULATION À RENSEIGNER].</p>
+        <p>SIRET : {{ businessInfo.siret }}.</p>
+        <p>TVA intracommunautaire : {{ businessInfo.vatNumber }}.</p>
       </section>
       <section>
         <h3>Contact et directeur de la publication</h3>
@@ -1668,12 +1841,15 @@ function showNextGalleryMedia() {
           Téléphone : <a :href="phoneHref">{{ businessInfo.phone }}</a>.
           E-mail : <a :href="emailHref">{{ businessInfo.email }}</a>.
         </p>
-        <p>Directeur de la publication : [RESPONSABLE DE PUBLICATION À RENSEIGNER].</p>
+        <p>Directeur de la publication : Jonathan NICOLAS et Christophe LOPES.</p>
       </section>
       <section>
         <h3>Hébergement</h3>
-        <p>Hébergeur : [NOM DE L’HÉBERGEUR À RENSEIGNER].</p>
-        <p>Adresse et coordonnées de l’hébergeur : [COORDONNÉES DE L’HÉBERGEUR À RENSEIGNER].</p>
+        <p>Hébergeur : {{ businessInfo.hostingProvider.name }}.</p>
+        <p>
+          Adresse : {{ businessInfo.hostingProvider.address }} —
+          <a :href="businessInfo.hostingProvider.website" target="_blank" rel="noopener noreferrer">netlify.com</a>.
+        </p>
       </section>
       <section>
         <h3>Propriété intellectuelle</h3>
@@ -1718,8 +1894,8 @@ function showNextGalleryMedia() {
       <section>
         <h3>Responsable du traitement</h3>
         <p>
-          Le responsable du traitement est [RAISON SOCIALE ET RESPONSABLE DU TRAITEMENT À
-          RENSEIGNER]. Vous pouvez le contacter à l’adresse
+          Le responsable du traitement est {{ businessInfo.legalName }}, dont le siège social est situé
+          {{ businessInfo.address }}. Vous pouvez le contacter à l’adresse
           <a :href="emailHref">{{ businessInfo.email }}</a> ou par téléphone au
           <a :href="phoneHref">{{ businessInfo.phone }}</a>.
         </p>
@@ -1733,8 +1909,8 @@ function showNextGalleryMedia() {
           votre demande.
         </p>
         <p>
-          La base légale et la durée de conservation des échanges sont à préciser selon la nature
-          de la demande : [BASE LÉGALE ET DURÉE DE CONSERVATION À RENSEIGNER].
+          La base légale et la durée de conservation des échanges restent à confirmer avant
+          publication selon la nature des demandes reçues.
         </p>
       </section>
       <section>
@@ -1768,10 +1944,10 @@ function showNextGalleryMedia() {
             navigateur afin de mémoriser votre préférence. Il n’est pas transmis par le site.
           </li>
           <li>
-            L’hébergeur peut traiter des données techniques nécessaires à la diffusion et à la
-            sécurité du site, notamment dans ses journaux de connexion. Les catégories de données,
-            leur durée de conservation et les coordonnées de l’hébergeur sont à renseigner :
-            [INFORMATIONS DE L’HÉBERGEUR ET DURÉES À RENSEIGNER].
+            L’hébergeur {{ businessInfo.hostingProvider.name }} peut traiter des données techniques
+            nécessaires à la diffusion et à la sécurité du site, notamment dans ses journaux de
+            connexion. Il est établi à {{ businessInfo.hostingProvider.address }}. Les durées exactes
+            de conservation applicables à ce site restent à confirmer auprès de l’hébergeur.
           </li>
         </ul>
       </section>
@@ -1781,9 +1957,9 @@ function showNextGalleryMedia() {
           Les informations sont destinées aux personnes habilitées à traiter votre demande et aux
           prestataires techniques intervenant pour le fonctionnement du site. Google et les autres
           services tiers peuvent traiter des données lorsque leurs contenus sont chargés ou que
-          vous suivez leurs liens. Les lieux de traitement et les éventuels transferts hors de
-          l’Espace économique européen sont à préciser selon les services retenus :
-          [DESTINATAIRES ET GARANTIES DE TRANSFERT À RENSEIGNER].
+          vous suivez leurs liens. Les lieux de traitement et les garanties applicables aux
+          éventuels transferts hors de l’Espace économique européen restent à confirmer avant
+          publication selon les services retenus.
         </p>
       </section>
       <section>
@@ -1795,7 +1971,10 @@ function showNextGalleryMedia() {
           droit s’applique et introduire une réclamation auprès de la Commission nationale de
           l’informatique et des libertés (CNIL).
         </p>
-        <p>Pour exercer vos droits, contactez : [CONTACT DU RESPONSABLE DU TRAITEMENT À RENSEIGNER].</p>
+        <p>
+          Pour exercer vos droits, écrivez à <a :href="emailHref">{{ businessInfo.email }}</a> ou au
+          siège social : {{ businessInfo.address }}.
+        </p>
       </section>
     </div>
   </dialog>
