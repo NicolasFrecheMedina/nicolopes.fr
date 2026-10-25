@@ -2,7 +2,7 @@ import { businessInfo } from './config/business.js'
 
 const pages = {
   '/': {
-    title: 'Carrosserie à Castets (Landes) | Nico & Lopes',
+    title: 'Nico & Lopes | Carrosserie à Castets (Landes)',
     description: 'Nico & Lopes, carrosserie à Castets dans les Landes : réparation de carrosserie, peinture automobile, vitrages, optiques et véhicule de courtoisie.',
     image: '/ressources/04-atelier/photo-garage-1280.webp',
   },
