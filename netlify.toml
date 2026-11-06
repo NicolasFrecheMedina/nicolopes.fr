@@ -4,7 +4,8 @@
 
 [build.environment]
   NODE_VERSION = "22"
-  VITE_ROBOTS_NOINDEX = "true"
+  VITE_SITE_URL = "https://nicolopes.fr"
+  VITE_ROBOTS_NOINDEX = "false"
 
 [[headers]]
   for = "/"
